@@ -206,6 +206,71 @@ Code quality pass — removed dead code, fixed bugs, optimized performance.
 - Target pipeline: Story ~3-4s (Haiku) + Audio ~5-8s (Flash) = ~8-12s with server overlap
 - 94 tests passing
 
+## API Token Costs
+
+Every request to the app makes two API calls: one to Anthropic (story generation) and one to ElevenLabs (voice narration). Here's the full cost breakdown.
+
+### Per-Request Token Breakdown (Claude Haiku 4.5)
+
+The Claude API call uses `tool_use` with `tool_choice`, which means input includes the system prompt, tool definition, and user message — and output is the structured tool response.
+
+| Component | Tokens | Type | Notes |
+|-----------|--------|------|-------|
+| System prompt | ~425 | Input (fixed) | Voice rules, factual integrity, anti-patterns |
+| Tool definition (`publish_vignette`) | ~215 | Input (fixed) | 4-field JSON schema with descriptions |
+| User message (no genre) | ~29 | Input (variable) | "Write a vignette about [Month] [Day]" |
+| User message (with genre) | ~78 | Input (variable) | +49 tokens for genre lens instructions |
+| **Total input** | **~670-720** | | ~640 tokens are fixed overhead |
+| Story text (150-200 words) | ~200-270 | Output | ~1 token per word |
+| Metadata (title, year, citation) | ~35-50 | Output | Structured tool fields |
+| **Total output** | **~250-340** | | Bounded by `max_tokens: 512` |
+| **Total per request** | **~920-1,060** | | ~70% input, ~30% output |
+
+### Per-Request Cost (Claude Haiku 4.5)
+
+| Metric | Rate | Cost |
+|--------|------|------|
+| Input tokens (~700) | $1.00 / 1M tokens | $0.0007 |
+| Output tokens (~300) | $5.00 / 1M tokens | $0.0015 |
+| **Claude total per request** | | **~$0.0022** |
+| With prompt caching (repeated system prompt) | $0.10 / 1M cached input | **~$0.0015** |
+
+### Per-Request Cost (ElevenLabs Flash v2.5)
+
+| Metric | Value |
+|--------|-------|
+| Story text | ~900-1,200 characters |
+| Outro (title, date, branding) | ~100-150 characters |
+| **Total characters per TTS call** | **~1,000-1,350** |
+| Flash v2.5 credit rate | 0.5 credits per character |
+| **Credits consumed** | **~500-675** |
+
+ElevenLabs pricing varies by plan:
+
+| Plan | Monthly | Included Chars | Cost per 1K chars (Flash) | Per-request cost |
+|------|---------|---------------|--------------------------|-----------------|
+| Starter | $5/mo | 20K | ~$0.08 | ~$0.08-0.11 |
+| Creator | $22/mo | 60K | ~$0.11 | ~$0.11-0.15 |
+| Pro | $99/mo | 200K | ~$0.10 | ~$0.10-0.14 |
+| Scale | $330/mo | 1M | ~$0.08 | ~$0.08-0.11 |
+
+### Total Cost Per Story (Combined)
+
+| Scenario | Claude | ElevenLabs | Total |
+|----------|--------|-----------|-------|
+| Single story (Pro plan) | $0.002 | ~$0.12 | **~$0.12** |
+| Single story (Scale plan) | $0.002 | ~$0.09 | **~$0.09** |
+| 100 stories/month (Pro plan) | $0.22 | ~$12.00 | **~$12.22** |
+| 1,000 stories/month (Scale plan) | $2.20 | ~$90.00 | **~$92.20** |
+
+### Key Takeaways
+
+- **ElevenLabs dominates cost** — TTS is ~98% of per-request spend. Claude story generation is essentially free by comparison.
+- **System prompt is fixed overhead** — ~640 of ~700 input tokens are the same every request. Anthropic's prompt caching can reduce this by 90%.
+- **`tool_use` adds ~215 tokens** — but eliminates the need for retry logic, regex parsing, or output validation. The reliability tradeoff is worth the token cost.
+- **Genre adds only ~50 tokens** — negligible cost impact for dramatically different stories.
+- **Shorter stories (150-200 words) save on both APIs** — fewer output tokens from Claude AND fewer characters to ElevenLabs.
+
 ## Environment Variables
 
 | Variable | Required | Description |
