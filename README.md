@@ -1,15 +1,15 @@
 # This Moment in History
 
-An AI-powered creative nonfiction storytelling app with voice narration. Pick any calendar date and receive a vivid 200-300 word historical vignette — not a Wikipedia summary, but an immersive second-person narrative that drops you into the moment. Then click "Read to Me" to hear it narrated aloud with ambient background music.
+An AI-powered creative nonfiction storytelling app with voice narration. Pick any calendar date and receive a vivid 200-300 word historical vignette — not a Wikipedia summary, but an immersive second-person narrative that drops you into the moment. Audio narration auto-generates with ambient background music for an immersive documentary-style experience.
 
 ## How It Works
 
 1. **Pick a date** from the calendar
 2. **Read** the AI-generated creative nonfiction vignette
-3. **Listen** — click "Read to Me" to hear Adam narrate with soft piano accompaniment
-4. **Download** the audio as an MP3 (includes branding outro)
-5. **Spin** for a different story from the same date
-6. **Mute** the background music if you prefer narration only
+3. **Listen** — narration auto-generates with Adam's voice and soft piano accompaniment
+4. **Control** — Play/Pause, Replay, Download MP3, Mute Music
+5. **Discover** — click "Random History" for a genre-themed story from a random date
+6. **Download** the audio as an MP3 (includes branding outro)
 
 ## Tech Stack
 
@@ -71,13 +71,15 @@ this-moment-in-history/
 │   │   ├── useTextToSpeech.ts       # TTS playback, download, lifecycle callbacks
 │   │   └── useBackgroundMusic.ts    # Ambient music (syncs with narrator, mute toggle)
 │   ├── lib/
-│   │   ├── validation.ts           # Input validation (month, day, spin)
+│   │   ├── validation.ts           # Input validation (month, day, genre)
+│   │   ├── genres.ts               # 20 content genres + random selection
 │   │   └── rateLimit.ts            # In-memory rate limiter (10 req/IP/60s)
 │   └── __tests__/
-│       ├── validation.test.ts       # 14 tests — input validation + message building
+│       ├── validation.test.ts       # 18 tests — input validation + message building
 │       ├── rateLimit.test.ts        # 5 tests — rate limiting logic
-│       ├── StoryCard.test.tsx       # 21 tests — rendering, audio, download, music
-│       ├── LoadingState.test.tsx     # 2 tests — loading UI
+│       ├── StoryCard.test.tsx       # 27 tests — rendering, audio, genre, controls
+│       ├── LoadingState.test.tsx     # 3 tests — loading UI + custom messages
+│       ├── genres.test.ts           # 5 tests — genre list + random selection
 │       └── ttsRoute.test.ts         # 16 tests — TTS validation, voice config
 ├── .env.local                       # API keys (gitignored)
 ├── vercel.json                      # Security headers (CSP, HSTS, X-Frame-Options)
@@ -129,6 +131,33 @@ Added subtle ambient music that plays during narration.
 - Mute only affects volume — does not start or stop playback independently
 - 61 tests passing
 
+### MVP 4 — Random History (March 14, 2026)
+
+Added genre-based discovery — explore history through thematic lenses.
+
+- "Random History" button replaces "Spin Your Luck" — picks a random date and genre
+- 20 curated content genres: True Crime, Espionage & Spies, War & Military, Science & Discovery, Love & Romance, Betrayal & Revenge, Survival & Exploration, Rise & Fall of Empires, Innovation & Invention, Art & Culture, Sports & Competition, Natural Disasters, Revolution & Rebellion, Medicine & Plague, Money & Economics, Religion & Faith, Women Who Changed History, Unsolved Mysteries, Food & Cuisine, Conspiracy & Mystery
+- Genre used as thematic lens for AI story generation via Kajiro IQ Pro prompting
+- Genre badge displayed on story card
+- Genre validation on server-side
+- 70 tests passing
+
+### MVP 5 — Auto-TTS Pipeline (March 14, 2026)
+
+Seamless audio experience — narration auto-generates as part of the story pipeline.
+
+- Auto-generate TTS audio immediately after story loads (no manual button click)
+- Multi-phase loading states: "Uncovering history..." then "Finding our history professor..."
+- Play/Pause toggle replaces the old "Read to Me" / "Stop Reading" buttons
+- Replay button to restart narration from the beginning
+- Background music fade-in (0 to 15% volume over 2 seconds)
+- Background music pauses/resumes in sync with narrator play/pause
+- Full audio state reset on date change and Random History click
+- Reduced Claude API max_tokens from 2048 to 1024 for faster response times
+- fetchStory() returns data directly for zero-delay TTS trigger
+- Removed manual "Read to Me" button — audio is now fully automatic
+- 74 tests passing
+
 ## Environment Variables
 
 | Variable | Required | Description |
@@ -149,16 +178,17 @@ Added subtle ambient music that plays during narration.
 ## Testing
 
 ```bash
-npm test          # Run all 61 tests
+npm test          # Run all 74 tests
 npm run test:watch # Watch mode
 ```
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| validation.test.ts | 14 | Input validation, monthName, buildUserMessage |
+| validation.test.ts | 18 | Input validation, monthName, buildUserMessage, genre validation |
 | rateLimit.test.ts | 5 | Allow/block, per-IP tracking, window reset |
-| StoryCard.test.tsx | 21 | Rendering, audio buttons, download, music toggle |
-| LoadingState.test.tsx | 2 | Loading text, skeleton lines |
+| StoryCard.test.tsx | 27 | Rendering, audio controls, genre badge, download, music toggle |
+| LoadingState.test.tsx | 3 | Loading text, skeleton lines, custom messages |
+| genres.test.ts | 5 | Genre list integrity, random selection |
 | ttsRoute.test.ts | 16 | TTS validation, voice config, voice settings |
 
 ## The Story Behind the Build
@@ -167,7 +197,7 @@ This project started as a portfolio build challenge: go from zero to deployed in
 
 The core idea: history doesn't have to read like a textbook. Every date has a story worth telling — not as a list of facts, but as a moment you can feel. The AI system prompt enforces literary journalism rules: sensory details, real people, real places, present tense, second person. No "On this day in..." openings. No Wikipedia summaries. Just immersive storytelling grounded in fact.
 
-MVP 2 and MVP 3 elevated the experience from reading to listening — adding voice narration and ambient music turned a text app into something closer to an audio documentary experience, all generated on demand.
+MVP 2 and MVP 3 elevated the experience from reading to listening — adding voice narration and ambient music turned a text app into something closer to an audio documentary experience, all generated on demand. MVP 4 added genre-based discovery, and MVP 5 made the entire audio pipeline automatic — no buttons to click, just pick a date and the story arrives with narration ready to play.
 
 ## Build Timeline
 
@@ -176,6 +206,7 @@ MVP 2 and MVP 3 elevated the experience from reading to listening — adding voi
 | Total timeline | 3 days (8-11 hrs) | 2 evening sessions |
 | MVP 1 complete | Day 1-2 | March 13, 2026 (3.5 hrs) |
 | MVP 2 + MVP 3 complete | — | March 14, 2026 (1.5 hrs) |
+| MVP 4 + MVP 5 complete | — | March 14, 2026 (same session) |
 | Total time | 8-11 hrs | ~5 hrs |
 | Time saved | — | ~50% |
 | Built with | — | Claude Code + Kajiro IQ Pro |
