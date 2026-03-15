@@ -141,11 +141,11 @@ export default function Home() {
   };
 
   const handleTogglePlayPause = () => {
-    tts.togglePlayPause();
-    if (tts.playing) {
-      bgMusic.pause();
-    } else {
+    const nowPlaying = tts.togglePlayPause();
+    if (nowPlaying) {
       bgMusic.resume();
+    } else {
+      bgMusic.pause();
     }
   };
 

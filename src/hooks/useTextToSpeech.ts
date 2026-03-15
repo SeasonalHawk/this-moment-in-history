@@ -133,18 +133,21 @@ export function useTextToSpeech() {
     }
   }, [playBlob]);
 
-  // Toggle play/pause — does NOT destroy audio
-  const togglePlayPause = useCallback(() => {
-    if (!audioRef.current) return;
+  // Toggle play/pause — returns the new playing state (boolean) so callers
+  // don't depend on the stale tts.playing closure (Issue #1 code review fix)
+  const togglePlayPause = useCallback((): boolean => {
+    if (!audioRef.current) return playing;
 
     if (playing) {
       audioRef.current.pause();
       setPlaying(false);
       setPaused(true);
+      return false;
     } else {
       audioRef.current.play().catch(() => {});
       setPlaying(true);
       setPaused(false);
+      return true;
     }
   }, [playing]);
 
