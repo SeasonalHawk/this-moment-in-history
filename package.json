@@ -1,7 +1,8 @@
 {
-  "name": "this-moment-in-history-temp",
+  "name": "this-moment-in-history",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
