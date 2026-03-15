@@ -153,7 +153,7 @@ export default function Home() {
 
             await tts.playBlob(blob, {
               onStart: () => bgMusic.play(),
-              onEnd: () => bgMusic.stop(),
+              onEnd: () => bgMusic.fadeOut(),
             });
           }
 
