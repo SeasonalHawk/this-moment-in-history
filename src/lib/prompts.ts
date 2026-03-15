@@ -1,6 +1,6 @@
 /**
  * Shared prompt, tool definitions, and model constants for story generation.
- * Used by both /api/history (standalone) and /api/pipeline (streaming).
+ * Used by /api/history and /api/pipeline (App Router endpoints).
  *
  * IMPORTANT: When Anthropic retires a model, update STORY_MODEL here.
  * Check model status: https://platform.claude.com/docs/en/about-claude/model-deprecations

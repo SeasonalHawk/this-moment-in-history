@@ -23,7 +23,7 @@ export default function useHistoryStory() {
   const [error, setError] = useState<string | null>(null);
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
-  // Standalone fetch — calls /api/history directly (kept as fallback)
+  // Standalone fetch — calls /api/history directly (App Router route)
   const fetchStory = useCallback(async (date: Date, genre?: string): Promise<FetchStoryResult | null> => {
     const month = date.getMonth() + 1;
     const day = date.getDate();
