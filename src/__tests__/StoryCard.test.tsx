@@ -18,6 +18,7 @@ const defaultProps = {
   hasAudio: false,
   musicMuted: false,
   onToggleMusic: vi.fn(),
+  autoExpand: true, // Most tests need the card expanded to see content
 };
 
 describe('StoryCard', () => {
@@ -33,8 +34,9 @@ describe('StoryCard', () => {
 
   it('renders event title and year', () => {
     render(<StoryCard {...defaultProps} />);
-    expect(screen.getByText('The Battle of Example')).toBeInTheDocument();
-    expect(screen.getByText('(1865)')).toBeInTheDocument();
+    // Event title appears in header (truncated) and body (full) — use getAllByText
+    expect(screen.getAllByText(/The Battle of Example/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/1865/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders MLA citation', () => {
@@ -204,5 +206,55 @@ describe('StoryCard', () => {
   it('does not render timing label when not provided', () => {
     render(<StoryCard {...defaultProps} />);
     expect(screen.queryByTestId('timing-label')).not.toBeInTheDocument();
+  });
+
+  // ── Collapsible accordion behavior ─────────────────────────────────────
+  it('starts collapsed when autoExpand is false', () => {
+    render(<StoryCard {...defaultProps} autoExpand={false} />);
+    const region = document.getElementById('story-card-content')!;
+    expect(region.style.maxHeight).toBe('0px');
+    expect(region.style.opacity).toBe('0');
+  });
+
+  it('shows date and event title in header when collapsed', () => {
+    render(<StoryCard {...defaultProps} autoExpand={false} />);
+    // Header is always visible — event title appears in both header and body
+    expect(screen.getByText('March 4')).toBeInTheDocument();
+    expect(screen.getAllByText(/The Battle of Example/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows "Loading narration…" when collapsed and no audio', () => {
+    render(<StoryCard {...defaultProps} autoExpand={false} hasAudio={false} />);
+    expect(screen.getByText('Loading narration…')).toBeInTheDocument();
+  });
+
+  it('does not show "Loading narration…" when expanded', () => {
+    render(<StoryCard {...defaultProps} autoExpand={true} hasAudio={false} />);
+    expect(screen.queryByText('Loading narration…')).not.toBeInTheDocument();
+  });
+
+  it('auto-expands when autoExpand changes to true', () => {
+    const { rerender } = render(<StoryCard {...defaultProps} autoExpand={false} />);
+    const region = document.getElementById('story-card-content')!;
+    expect(region.style.opacity).toBe('0');
+
+    rerender(<StoryCard {...defaultProps} autoExpand={true} />);
+    expect(region.style.opacity).toBe('1');
+  });
+
+  it('is system-controlled (locked) — no toggle button for card header', () => {
+    render(<StoryCard {...defaultProps} autoExpand={true} />);
+    // The only buttons should be action buttons (music, audio, etc), not accordion toggle
+    expect(screen.queryByRole('button', { expanded: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { expanded: false })).not.toBeInTheDocument();
+  });
+
+  it('collapses when autoExpand changes to false', () => {
+    const { rerender } = render(<StoryCard {...defaultProps} autoExpand={true} />);
+    const region = document.getElementById('story-card-content')!;
+    expect(region.style.opacity).toBe('1');
+
+    rerender(<StoryCard {...defaultProps} autoExpand={false} />);
+    expect(region.style.opacity).toBe('0');
   });
 });

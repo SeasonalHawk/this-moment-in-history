@@ -1,6 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
+import Collapsible from './Collapsible';
 
 interface StoryCardProps {
   story: string;
@@ -19,6 +20,8 @@ interface StoryCardProps {
   musicMuted: boolean;
   onToggleMusic: () => void;
   timingLabel?: string;
+  /** When true, auto-expands the card body (one-way trigger). */
+  autoExpand?: boolean;
 }
 
 export default function StoryCard({
@@ -27,15 +30,41 @@ export default function StoryCard({
   onTogglePlayPause, onReplay, onDownloadAudio,
   audioPlaying, hasAudio,
   musicMuted, onToggleMusic, timingLabel,
+  autoExpand = false,
 }: StoryCardProps) {
+  // System-controlled: expanded state comes directly from prop.
+  const expanded = autoExpand;
+
+  const header = (
+    <div className="flex items-center gap-3 min-w-0">
+      <h2 className="text-amber-400 font-semibold text-lg shrink-0">
+        {format(date, 'MMMM d')}
+      </h2>
+      {eventTitle && (
+        <span className="text-stone-400 text-sm truncate">
+          {eventTitle}
+          {eventYear && <span className="text-stone-500 ml-1">({eventYear})</span>}
+        </span>
+      )}
+      {!expanded && !hasAudio && (
+        <span className="text-stone-600 text-xs ml-auto shrink-0 animate-pulse">
+          Loading narration…
+        </span>
+      )}
+    </div>
+  );
+
   return (
-    <div className="bg-stone-900 border border-stone-700 rounded-xl p-6 shadow-lg max-w-2xl mx-auto">
-      {/* Header with date and action buttons */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="text-amber-400 font-semibold text-lg">
-          {format(date, 'MMMM d')}
-        </h2>
-        <div className="flex items-center gap-2 flex-wrap">
+    <Collapsible
+      id="story-card-content"
+      expanded={expanded}
+      locked
+      header={header}
+      className="bg-stone-900 border border-stone-700 rounded-xl p-6 shadow-lg max-w-2xl mx-auto"
+    >
+      <div className="mt-4">
+        {/* Action buttons */}
+        <div className="flex items-center justify-end mb-4 flex-wrap gap-2">
           {/* Background music toggle */}
           <button
             onClick={onToggleMusic}
@@ -132,52 +161,52 @@ export default function StoryCard({
             )}
           </button>
         </div>
-      </div>
 
-      {/* Genre badge */}
-      {genre && (
-        <div className="mb-3">
-          <span className="inline-block px-3 py-1 bg-amber-600/20 border border-amber-600/40 text-amber-400 text-sm font-medium rounded-full">
-            {genre}
-          </span>
-        </div>
-      )}
+        {/* Genre badge */}
+        {genre && (
+          <div className="mb-3">
+            <span className="inline-block px-3 py-1 bg-amber-600/20 border border-amber-600/40 text-amber-400 text-sm font-medium rounded-full">
+              {genre}
+            </span>
+          </div>
+        )}
 
-      {/* Event title and year */}
-      {eventTitle && (
-        <div className="mb-4 pb-3 border-b border-stone-800">
-          <h3 className="text-stone-100 font-semibold text-xl">
-            {eventTitle}
-            {eventYear && <span className="text-amber-500 ml-2 text-base font-normal">({eventYear})</span>}
-          </h3>
-        </div>
-      )}
+        {/* Event title and year */}
+        {eventTitle && (
+          <div className="mb-4 pb-3 border-b border-stone-800">
+            <h3 className="text-stone-100 font-semibold text-xl">
+              {eventTitle}
+              {eventYear && <span className="text-amber-500 ml-2 text-base font-normal">({eventYear})</span>}
+            </h3>
+          </div>
+        )}
 
-      {/* Story text */}
-      <div className="prose prose-invert prose-stone max-w-none">
-        <p className="text-stone-300 leading-relaxed whitespace-pre-wrap">
-          {story}
-        </p>
-      </div>
-
-      {/* MLA Citation */}
-      {mlaCitation && (
-        <div className="mt-6 pt-4 border-t border-stone-800">
-          <p className="text-stone-500 text-xs uppercase tracking-wider mb-1">Reference</p>
-          <p className="text-stone-400 text-sm italic leading-relaxed">
-            {mlaCitation}
+        {/* Story text */}
+        <div className="prose prose-invert prose-stone max-w-none">
+          <p className="text-stone-300 leading-relaxed whitespace-pre-wrap">
+            {story}
           </p>
         </div>
-      )}
 
-      {/* Pipeline timing */}
-      {timingLabel && (
-        <div className="mt-4 pt-3 border-t border-stone-800/50" data-testid="timing-label">
-          <p className="text-stone-600 text-xs font-mono text-center">
-            {timingLabel}
-          </p>
-        </div>
-      )}
-    </div>
+        {/* MLA Citation */}
+        {mlaCitation && (
+          <div className="mt-6 pt-4 border-t border-stone-800">
+            <p className="text-stone-500 text-xs uppercase tracking-wider mb-1">Reference</p>
+            <p className="text-stone-400 text-sm italic leading-relaxed">
+              {mlaCitation}
+            </p>
+          </div>
+        )}
+
+        {/* Pipeline timing */}
+        {timingLabel && (
+          <div className="mt-4 pt-3 border-t border-stone-800/50" data-testid="timing-label">
+            <p className="text-stone-600 text-xs font-mono text-center">
+              {timingLabel}
+            </p>
+          </div>
+        )}
+      </div>
+    </Collapsible>
   );
 }

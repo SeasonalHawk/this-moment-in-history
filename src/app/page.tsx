@@ -153,7 +153,7 @@ export default function Home() {
 
             await tts.playBlob(blob, {
               onStart: () => bgMusic.play(),
-              onEnd: () => bgMusic.stop(),
+              onEnd: () => bgMusic.fadeOut(),
             });
           }
 
@@ -216,9 +216,14 @@ export default function Home() {
           onDateSelect={handleDateSelect}
         />
 
-        {/* Story Area */}
-        {(history.loading || tts.loading) && phases.length > 0 && (
-          <LoadingState phases={phases} pipelineStart={pipelineStart} />
+        {/* Story Area — both cards persist in DOM once pipeline starts */}
+        {phases.length > 0 && (
+          <LoadingState
+            phases={phases}
+            pipelineStart={pipelineStart}
+            autoExpand={pipelineStart !== null}
+            autoCollapse={tts.playing}
+          />
         )}
 
         {history.error && (
@@ -233,7 +238,7 @@ export default function Home() {
           </div>
         )}
 
-        {history.story && selectedDate && !history.loading && (
+        {history.story && selectedDate && (
           <StoryCard
             story={history.story}
             date={selectedDate}
@@ -254,6 +259,7 @@ export default function Home() {
             hasAudio={tts.hasAudio}
             musicMuted={bgMusic.muted}
             onToggleMusic={bgMusic.toggleMute}
+            autoExpand={tts.playing}
             timingLabel={
               timing.storyMs !== null && timing.audioMs !== null
                 ? `Story ${formatMs(timing.storyMs)} · Narration ${formatMs(timing.audioMs)} · Total ${formatMs(timing.storyMs + timing.audioMs)}${
