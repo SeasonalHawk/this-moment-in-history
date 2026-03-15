@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import Collapsible from './Collapsible';
 
 export interface LoadingPhase {
   /** Display message for this phase (e.g. "Searching the archives...") */
@@ -14,6 +15,10 @@ export interface LoadingPhase {
 interface LoadingStateProps {
   phases: LoadingPhase[];
   pipelineStart: number | null;
+  /** When true, auto-expands the card (one-way trigger). */
+  autoExpand?: boolean;
+  /** When true, auto-collapses the card (one-way trigger). */
+  autoCollapse?: boolean;
 }
 
 /**
@@ -23,10 +28,16 @@ interface LoadingStateProps {
  *   - Completed (endTime set): dimmed text, fixed duration
  *   - Active (startTime > 0, no endTime): amber text, live timer
  *   - Waiting (startTime === 0): muted text, ellipsis
+ *
+ * The phase progress and skeleton lines are collapsible — the header
+ * (quill icon + title + elapsed timer) stays visible when collapsed.
  */
-export default function LoadingState({ phases, pipelineStart }: LoadingStateProps) {
+export default function LoadingState({ phases, pipelineStart, autoExpand = false, autoCollapse = false }: LoadingStateProps) {
   const [tick, setTick] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Derive expanded state directly from props — system-controlled (locked).
+  const expanded = autoExpand && !autoCollapse;
 
   // Tick every 250ms to update live timers
   useEffect(() => {
@@ -58,34 +69,41 @@ export default function LoadingState({ phases, pipelineStart }: LoadingStateProp
     return 'waiting';
   };
 
-  return (
-    <div className="bg-stone-900 border border-stone-700 rounded-xl p-6 shadow-lg max-w-2xl mx-auto">
-      {/* Quill icon */}
-      <div className="flex items-center gap-3 mb-5">
-        <svg
-          className="w-6 h-6 text-amber-400 animate-bounce"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-          <path d="m15 5 4 4" />
-        </svg>
-        <span className="text-amber-400 font-medium">
-          Preparing your moment in history
+  const header = (
+    <div className="flex items-center gap-3">
+      <svg
+        className="w-6 h-6 text-amber-400 animate-bounce"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+        <path d="m15 5 4 4" />
+      </svg>
+      <span className="text-amber-400 font-medium">
+        Preparing your moment in history
+      </span>
+      {pipelineStart && (
+        <span className="text-stone-500 text-sm font-mono ml-auto" data-testid="elapsed-timer">
+          {formatMs(Date.now() - pipelineStart)}
         </span>
-        {pipelineStart && (
-          <span className="text-stone-500 text-sm font-mono ml-auto" data-testid="elapsed-timer">
-            {formatMs(Date.now() - pipelineStart)}
-          </span>
-        )}
-      </div>
+      )}
+    </div>
+  );
 
+  return (
+    <Collapsible
+      id="loading-state-content"
+      expanded={expanded}
+      locked
+      header={header}
+      className="bg-stone-900 border border-stone-700 rounded-xl p-6 shadow-lg max-w-2xl mx-auto"
+    >
       {/* Phase progress rows */}
-      <div className="space-y-3 mb-6" data-testid="phase-list">
+      <div className="space-y-3 mb-6 mt-5" data-testid="phase-list">
         {phases.map((phase, i) => {
           const state = phaseState(phase);
           return (
@@ -149,6 +167,6 @@ export default function LoadingState({ phases, pipelineStart }: LoadingStateProp
         <div className="h-4 bg-stone-800 rounded animate-pulse w-full" />
         <div className="h-4 bg-stone-800 rounded animate-pulse w-7/12" />
       </div>
-    </div>
+    </Collapsible>
   );
 }
