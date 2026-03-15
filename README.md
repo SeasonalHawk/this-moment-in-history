@@ -53,16 +53,26 @@ Open [http://localhost:3000](http://localhost:3000)
 ```
 this-moment-in-history/
 ├── public/
-│   └── audio/
-│       └── chronostream-runner.mp3   # Voyagers!-themed background music (static asset)
+│   ├── audio/
+│   │   └── chronostream-runner.mp3   # Voyagers!-themed background music (static asset)
+│   ├── logo-full.png                 # Midjourney cinematic logo (header, OG, social)
+│   ├── logo-icon.png                 # Midjourney app icon (1024x1024, favicon source)
+│   ├── logo.svg                      # Flat SVG timeline motif (inline/themeable)
+│   ├── favicon.ico                   # Multi-size ICO (16/32/48px)
+│   ├── favicon-16x16.png             # 16px favicon
+│   ├── favicon-32x32.png             # 32px favicon
+│   ├── apple-touch-icon.png          # 180px Apple touch icon
+│   ├── android-chrome-192x192.png    # Android PWA icon (192px)
+│   ├── android-chrome-512x512.png    # Android PWA icon (512px)
+│   └── site.webmanifest              # PWA manifest (standalone, amber theme)
 ├── src/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── history/route.ts      # Story generation endpoint (standalone fallback)
 │   │   │   ├── pipeline/route.ts     # Unified streaming pipeline (story + TTS, NDJSON)
 │   │   │   └── tts/route.ts          # Text-to-speech endpoint (standalone fallback)
-│   │   ├── layout.tsx                # Root layout (Geist fonts)
-│   │   └── page.tsx                  # Main page — streaming pipeline orchestrator
+│   │   ├── layout.tsx                # Root layout — Geist fonts, metadata, favicons, OG/Twitter cards
+│   │   └── page.tsx                  # Main page — streaming pipeline orchestrator, logo header
 │   ├── components/
 │   │   ├── CalendarPicker.tsx         # Date picker (react-day-picker, amber theme)
 │   │   ├── Collapsible.tsx            # Reusable accordion with locked (system-controlled) mode
@@ -94,6 +104,8 @@ this-moment-in-history/
 │       ├── useBackgroundMusic.test.ts # 36 tests — audio source, warmUp, fade-in/out, cleanup
 │       └── validation.test.ts         # 18 tests — input validation, monthName, buildUserMessage
 ├── .env.local                         # API keys (gitignored)
+├── start.sh                           # Dev server launcher (pnpm dev)
+├── stop.sh                            # Dev server stopper (kills port 3000)
 ├── vercel.json                        # Security headers (CSP, HSTS, X-Frame-Options)
 ├── vitest.config.ts                   # Test configuration
 └── package.json
@@ -241,6 +253,19 @@ Cards persist in DOM — system choreographs expand/collapse for a polished UX.
 - Cards stay visible as collapsed headers even when not active
 - 214 tests passing
 
+### v1.1.0 — Branding & Metadata (March 15, 2026)
+
+Professional branding, PWA support, and social sharing metadata.
+
+- **Midjourney cinematic logo** — `logo-full.png` replaces text header in `page.tsx` via `next/image` with `priority` (LCP preload)
+- **Hybrid favicon system** — Multi-size ICO (16/32/48px), Apple touch icon (180px), Android Chrome icons (192/512px) generated from Midjourney app icon
+- **PWA manifest** — `site.webmanifest` with standalone display, stone-950 background, amber theme color
+- **Open Graph + Twitter Cards** — Full social preview metadata in `layout.tsx` with `metadataBase` for production URL resolution
+- **SVG timeline motif** — Flat `logo.svg` for inline/themeable use cases
+- **Dev scripts** — `start.sh` / `stop.sh` convenience scripts for dev server
+- **Bug fixes** — metadataBase warning resolved (see [#23](https://github.com/SeasonalHawk/this-moment-in-history/issues/23)-[#29](https://github.com/SeasonalHawk/this-moment-in-history/issues/29)), branding implementation (see [#31](https://github.com/SeasonalHawk/this-moment-in-history/issues/31))
+- 214 tests passing
+
 ## API Token Costs
 
 Every request to the app makes two API calls: one to Anthropic (story generation) and one to ElevenLabs (voice narration). Here's the full cost breakdown.
@@ -354,7 +379,7 @@ The core idea: history doesn't have to read like a textbook. Every date has a st
 
 MVP 2 and MVP 3 elevated the experience from reading to listening — adding voice narration and ambient music turned a text app into something closer to an audio documentary experience, all generated on demand. MVP 4 added genre-based discovery, MVP 5 made the entire audio pipeline automatic, MVP 6 fixed browser autoplay compliance and added real-time pipeline performance metrics, MVP 7 cleaned up code quality and fixed bugs, and MVP 8 introduced a unified streaming pipeline with faster AI models to cut total generation time from ~31s to ~8-12s.
 
-MVP 9 brought the Voyagers!-themed Chronostream Runner soundtrack with professional fade-in/fade-out, and MVP 10 added system-controlled collapsible accordion sections — the LoadingState and StoryCard now persist in the DOM permanently with choreographed expand/collapse transitions, preventing premature button clicks before audio is ready.
+MVP 9 brought the Voyagers!-themed Chronostream Runner soundtrack with professional fade-in/fade-out, and MVP 10 added system-controlled collapsible accordion sections — the LoadingState and StoryCard now persist in the DOM permanently with choreographed expand/collapse transitions, preventing premature button clicks before audio is ready. v1.1.0 added professional Midjourney branding, a complete favicon/PWA system, and Open Graph metadata for social sharing previews.
 
 ## Build Timeline
 
@@ -366,6 +391,7 @@ MVP 9 brought the Voyagers!-themed Chronostream Runner soundtrack with professio
 | MVP 4 + MVP 5 + MVP 6 complete | — | March 14, 2026 (same session) |
 | MVP 7 + MVP 8 complete | — | March 14, 2026 (same session) |
 | MVP 9 + MVP 10 complete | — | March 15, 2026 |
+| v1.1.0 (branding + metadata) | — | March 15, 2026 |
 | Total time | 8-11 hrs | ~8 hrs |
 | Built with | — | Claude Code + Kajiro IQ Pro |
 
