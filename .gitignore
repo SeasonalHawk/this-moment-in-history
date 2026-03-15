@@ -31,3 +31,7 @@ yarn.lock
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev server runtime files
+.dev.pid
+.dev.log

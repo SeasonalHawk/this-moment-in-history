@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import CalendarPicker from '@/components/CalendarPicker';
 import StoryCard from '@/components/StoryCard';
@@ -26,6 +27,7 @@ export default function Home() {
   const [phases, setPhases] = useState<LoadingPhase[]>([]);
   const [costData, setCostData] = useState<CostData | null>(null);
   const phaseStartRef = useRef<number>(0);
+  const abortRef = useRef<AbortController | null>(null);
 
   const history = useHistoryStory();
   const tts = useTextToSpeech();
@@ -38,7 +40,13 @@ export default function Home() {
    * Server-side overlap: TTS fires immediately after story gen completes,
    * without waiting for client round-trip.
    */
-  const runPipeline = async (date: Date, genre?: string) => {
+  const runPipeline = useCallback(async (date: Date, genre?: string) => {
+    // Abort any in-flight pipeline to prevent race conditions when
+    // the user clicks rapidly or selects a new date mid-stream.
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     // Full reset
     tts.cleanup();
     bgMusic.stop();
@@ -72,6 +80,7 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month, day, ...(genre ? { genre } : {}) }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -79,13 +88,18 @@ export default function Home() {
         throw new Error(data.error || 'Pipeline failed');
       }
 
-      const reader = response.body!.getReader();
+      if (!response.body) {
+        throw new Error('No response body received');
+      }
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        if (controller.signal.aborted) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -93,7 +107,14 @@ export default function Home() {
 
         for (const line of lines) {
           if (!line.trim()) continue;
-          const event = JSON.parse(line);
+
+          let event;
+          try {
+            event = JSON.parse(line);
+          } catch {
+            console.warn('Skipping malformed NDJSON line:', line.slice(0, 100));
+            continue;
+          }
 
           if (event.type === 'story') {
             const storyEnd = Date.now();
@@ -163,12 +184,14 @@ export default function Home() {
         }
       }
     } catch (err) {
+      // Silently ignore aborted requests — the new pipeline will take over
+      if ((err as Error).name === 'AbortError') return;
       history.setErrorState((err as Error).message || 'Something went wrong');
       tts.setLoadingState(false);
     } finally {
       setPipelineStart(null);
     }
-  };
+  }, [tts, bgMusic, history]);
 
   const handleDateSelect = async (date: Date | undefined) => {
     setSelectedDate(date);
@@ -198,11 +221,16 @@ export default function Home() {
     <div className="min-h-screen bg-stone-950 text-stone-100">
       {/* Header */}
       <header className="border-b border-stone-800 py-6">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-3xl font-bold text-amber-400 tracking-tight">
-            This Moment in History
-          </h1>
-          <p className="text-stone-400 mt-2">
+        <div className="max-w-4xl mx-auto px-4 flex flex-col items-center gap-3">
+          <Image
+            src="/logo-full.png"
+            alt="This Moment in History"
+            width={400}
+            height={224}
+            priority
+            className="w-full max-w-[400px] h-auto"
+          />
+          <p className="text-stone-400 mt-1">
             Pick a date. Step into the past.
           </p>
         </div>

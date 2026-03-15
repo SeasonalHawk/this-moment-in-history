@@ -56,8 +56,14 @@ export function useTextToSpeech() {
   }, []);
 
   // Warm up audio context — call synchronously inside a user click handler
-  // to establish browser audio permission before any async work
+  // to establish browser audio permission before any async work.
+  // Disposes any existing audio element first to prevent listener leaks
+  // when called multiple times (e.g. rapid clicks or Random History).
   const warmUp = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeEventListener('ended', handleEndedRef.current);
+    }
     const audio = new Audio();
     audio.addEventListener('ended', handleEndedRef.current);
     audioRef.current = audio;
@@ -88,12 +94,21 @@ export function useTextToSpeech() {
     }
     audio.src = url;
 
-    setHasAudio(true);
     setLoading(false);
-    await audio.play();
-    setPlaying(true);
-    setPaused(false);
-    onStartRef.current?.();
+    try {
+      await audio.play();
+      // Only mark as ready AFTER play succeeds — prevents showing
+      // play/pause/download controls when audio is actually broken.
+      setHasAudio(true);
+      setPlaying(true);
+      setPaused(false);
+      onStartRef.current?.();
+    } catch {
+      // Autoplay blocked or audio element broken — clean state
+      setHasAudio(false);
+      setPlaying(false);
+      setPaused(false);
+    }
   }, []);
 
   // Generate audio via /api/tts and auto-play (standalone, kept as fallback)

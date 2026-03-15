@@ -38,13 +38,23 @@ export default function Collapsible({
   const [measuredHeight, setMeasuredHeight] = useState(0);
   const headerId = `${id}-header`;
 
-  // Re-measure content height on every render so the animation target
-  // stays accurate even when children change (e.g. live timers).
+  // Re-measure content height when expanded state changes so the
+  // maxHeight animation target stays accurate. Uses ResizeObserver
+  // to track dynamic content changes (e.g. live timers) without
+  // triggering a re-render loop.
   useEffect(() => {
-    if (contentRef.current) {
-      setMeasuredHeight(contentRef.current.scrollHeight);
-    }
-  });
+    const el = contentRef.current;
+    if (!el) return;
+
+    setMeasuredHeight(el.scrollHeight);
+
+    const observer = new ResizeObserver(() => {
+      setMeasuredHeight(el.scrollHeight);
+    });
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [expanded]);
 
   return (
     <div className={className}>

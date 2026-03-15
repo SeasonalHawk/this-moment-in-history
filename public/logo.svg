@@ -1,0 +1,20 @@
+<svg width="420" height="140" viewBox="0 0 420 140" xmlns="http://www.w3.org/2000/svg">
+  <!-- timeline -->
+  <line x1="40" y1="60" x2="200" y2="60" stroke="#94A3B8" stroke-width="4"/>
+  <!-- past nodes -->
+  <circle cx="70" cy="60" r="6" fill="#94A3B8"/>
+  <circle cx="110" cy="60" r="6" fill="#94A3B8"/>
+  <circle cx="150" cy="60" r="6" fill="#94A3B8"/>
+  <!-- current moment -->
+  <circle cx="200" cy="60" r="8" fill="#F59E0B"/>
+  <!-- sparkle -->
+  <text x="195" y="40" font-size="16" fill="#FFD166">✦</text>
+  <!-- title -->
+  <text x="40" y="110"
+        font-family="Inter, Arial, sans-serif"
+        font-size="28"
+        font-weight="600"
+        fill="#0B132B">
+        This Moment in History
+  </text>
+</svg>

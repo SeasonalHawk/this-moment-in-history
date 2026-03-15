@@ -1,0 +1,21 @@
+{
+  "name": "This Moment in History",
+  "short_name": "TMIH",
+  "description": "AI-powered historical storytelling with voice narration",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a09",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

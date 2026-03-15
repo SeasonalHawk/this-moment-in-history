@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Build the full narration: story → title, date, year → branding
-  const eventTitle = typeof body.eventTitle === 'string' ? body.eventTitle : '';
-  const eventDate = typeof body.eventDate === 'string' ? body.eventDate : '';
-  const eventYear = typeof body.eventYear === 'string' ? body.eventYear : '';
+  // Truncate metadata fields to prevent cost amplification via oversized values.
+  const MAX_FIELD_LEN = 200;
+  const eventTitle = typeof body.eventTitle === 'string' ? body.eventTitle.slice(0, MAX_FIELD_LEN) : '';
+  const eventDate = typeof body.eventDate === 'string' ? body.eventDate.slice(0, MAX_FIELD_LEN) : '';
+  const eventYear = typeof body.eventYear === 'string' ? body.eventYear.slice(0, MAX_FIELD_LEN) : '';
 
   let outro = '\n\n';
   if (eventTitle) {
