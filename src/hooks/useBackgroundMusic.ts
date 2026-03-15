@@ -4,7 +4,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 
 const BG_MUSIC_URL = '/audio/chronostream-runner.mp3';
 const TARGET_VOLUME = 0.12; // 12% volume — tuned for the fuller Voyagers!-themed track
-const FADE_DURATION_MS = 2000; // 2 seconds fade-in
+const FADE_IN_MS = 2000; // 2 seconds fade-in
+const FADE_OUT_MS = 3000; // 3 seconds fade-out — lets the music trail off gracefully
 const FADE_INTERVAL_MS = 50; // Update every 50ms
 
 export function useBackgroundMusic() {
@@ -51,7 +52,7 @@ export function useBackgroundMusic() {
     });
 
     // Fade in from 0 to TARGET_VOLUME
-    const steps = FADE_DURATION_MS / FADE_INTERVAL_MS;
+    const steps = FADE_IN_MS / FADE_INTERVAL_MS;
     const increment = TARGET_VOLUME / steps;
     let currentVol = 0;
 
@@ -67,12 +68,46 @@ export function useBackgroundMusic() {
     }, FADE_INTERVAL_MS);
   }, [getAudio, muted, clearFade]);
 
-  // Stop music — called when narrator stops
+  // Fade out gracefully — volume ramps from current level to 0, then pauses.
+  // Called when narration ends so the music trails off professionally.
+  const fadeOut = useCallback(() => {
+    clearFade();
+    if (!audioRef.current) return;
+
+    const startVol = audioRef.current.volume;
+    if (startVol <= 0) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      return;
+    }
+
+    const steps = FADE_OUT_MS / FADE_INTERVAL_MS;
+    const decrement = startVol / steps;
+    let currentVol = startVol;
+
+    fadeRef.current = setInterval(() => {
+      currentVol -= decrement;
+      if (currentVol <= 0) {
+        currentVol = 0;
+        clearFade();
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      }
+      if (audioRef.current) {
+        audioRef.current.volume = currentVol;
+      }
+    }, FADE_INTERVAL_MS);
+  }, [clearFade]);
+
+  // Hard stop — immediately pauses and resets (used on pipeline restart)
   const stop = useCallback(() => {
     clearFade();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.volume = 0;
     }
   }, [clearFade]);
 
@@ -113,5 +148,5 @@ export function useBackgroundMusic() {
     };
   }, [clearFade]);
 
-  return { muted, warmUp, play, stop, pause, resume, toggleMute };
+  return { muted, warmUp, play, fadeOut, stop, pause, resume, toggleMute };
 }
