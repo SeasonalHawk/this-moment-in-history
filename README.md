@@ -1,12 +1,12 @@
 # This Moment in History
 
-An AI-powered creative nonfiction storytelling app with voice narration. Pick any calendar date and receive a vivid 150-200 word historical vignette — not a Wikipedia summary, but an immersive second-person narrative that drops you into the moment. Audio narration auto-generates with ambient background music for an immersive documentary-style experience.
+An AI-powered creative nonfiction storytelling app with voice narration. Pick any calendar date and receive a vivid 150-200 word historical vignette — not a Wikipedia summary, but an immersive second-person narrative that drops you into the moment. Audio narration auto-generates with Voyagers!-themed background music for an immersive documentary-style experience.
 
 ## How It Works
 
 1. **Pick a date** from the calendar
 2. **Read** the AI-generated creative nonfiction vignette
-3. **Listen** — narration auto-generates with Adam's voice and soft piano accompaniment
+3. **Listen** — narration auto-generates with Adam's voice and Voyagers!-themed accompaniment
 4. **Control** — Play/Pause, Replay, Download MP3, Mute Music
 5. **Discover** — click "Random History" for a genre-themed story from a random date
 6. **Download** the audio as an MP3 (includes branding outro)
@@ -19,7 +19,7 @@ An AI-powered creative nonfiction storytelling app with voice narration. Pick an
 | Styling | Tailwind CSS 4 |
 | AI Storytelling | Anthropic Claude API (`claude-haiku-4-5-20251001`) |
 | Voice Narration | ElevenLabs TTS API (Adam voice, Flash v2.5) |
-| Background Music | ElevenLabs Sound Effects API (dreamscape piano loop) |
+| Background Music | Voyagers!-themed ambient soundtrack (Chronostream Runner, static asset) |
 | Calendar | react-day-picker, date-fns |
 | Testing | Vitest, React Testing Library |
 | Prompt Framework | Kajiro IQ Pro |
@@ -28,9 +28,9 @@ An AI-powered creative nonfiction storytelling app with voice narration. Pick an
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/this-moment-in-history.git
+git clone https://github.com/SeasonalHawk/this-moment-in-history.git
 cd this-moment-in-history
-npm install
+pnpm install
 ```
 
 Create `.env.local` with your API keys:
@@ -43,7 +43,7 @@ ELEVENLABS_API_KEY=your-elevenlabs-key
 Start the dev server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
@@ -54,39 +54,48 @@ Open [http://localhost:3000](http://localhost:3000)
 this-moment-in-history/
 ├── public/
 │   └── audio/
-│       └── ambient-bg.mp3          # Loopable dreamscape piano (static asset)
+│       └── chronostream-runner.mp3   # Voyagers!-themed background music (static asset)
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── history/route.ts    # Story generation endpoint (standalone fallback)
-│   │   │   ├── pipeline/route.ts   # Unified streaming pipeline (story + TTS, NDJSON)
-│   │   │   └── tts/route.ts        # Text-to-speech endpoint (standalone fallback)
-│   │   ├── layout.tsx              # Root layout
-│   │   └── page.tsx                # Main page — streaming pipeline orchestrator
+│   │   │   ├── history/route.ts      # Story generation endpoint (standalone fallback)
+│   │   │   ├── pipeline/route.ts     # Unified streaming pipeline (story + TTS, NDJSON)
+│   │   │   └── tts/route.ts          # Text-to-speech endpoint (standalone fallback)
+│   │   ├── layout.tsx                # Root layout (Geist fonts)
+│   │   └── page.tsx                  # Main page — streaming pipeline orchestrator
 │   ├── components/
-│   │   ├── CalendarPicker.tsx       # Date picker (react-day-picker, amber theme)
-│   │   ├── StoryCard.tsx            # Story display + all action buttons + timing
-│   │   └── LoadingState.tsx         # Skeleton loader with quill animation + elapsed timer
+│   │   ├── CalendarPicker.tsx         # Date picker (react-day-picker, amber theme)
+│   │   ├── Collapsible.tsx            # Reusable accordion with locked (system-controlled) mode
+│   │   ├── LoadingState.tsx           # Multi-phase loading indicator with live timers
+│   │   └── StoryCard.tsx              # Story display + audio controls + timing + cost estimate
 │   ├── hooks/
-│   │   ├── useHistoryStory.ts       # Story state + pipeline helpers (startLoading, setResult)
-│   │   ├── useTextToSpeech.ts       # TTS playback, warmUp, playBlob, download, lifecycle
-│   │   └── useBackgroundMusic.ts    # Ambient music (syncs with narrator, mute toggle)
+│   │   ├── useBackgroundMusic.ts      # Voyagers! music — fade-in/out, warmUp, mute toggle
+│   │   ├── useHistoryStory.ts         # Story state + pipeline helpers (startLoading, setResult)
+│   │   └── useTextToSpeech.ts         # TTS playback, warmUp, playBlob, download, lifecycle
 │   ├── lib/
-│   │   ├── prompts.ts             # Shared system prompt + tool definition
-│   │   ├── validation.ts           # Input validation (month, day, genre)
-│   │   ├── genres.ts               # 20 content genres + random selection
-│   │   └── rateLimit.ts            # In-memory rate limiter (10 req/IP/60s)
+│   │   ├── costs.ts                   # Per-request cost estimation (Claude + ElevenLabs)
+│   │   ├── genres.ts                  # 20 content genres + random selection
+│   │   ├── loadingMessages.ts         # Themed loading phase messages (archive + Voyagers!)
+│   │   ├── prompts.ts                 # Shared system prompt + tool definition
+│   │   ├── rateLimit.ts               # In-memory rate limiter (10 req/IP/60s)
+│   │   └── validation.ts             # Input validation (month, day, genre)
 │   └── __tests__/
-│       ├── validation.test.ts       # 18 tests — input validation + message building
-│       ├── rateLimit.test.ts        # 5 tests — rate limiting logic
-│       ├── StoryCard.test.tsx       # 29 tests — rendering, audio, genre, controls, timing
-│       ├── LoadingState.test.tsx     # 5 tests — loading UI, custom messages, elapsed timer
-│       ├── genres.test.ts           # 5 tests — genre list + random selection
-│       ├── ttsRoute.test.ts         # 16 tests — TTS validation, voice config
-│       └── pipelineConfig.test.ts   # 14 tests — pipeline models, shared prompt, tool schema
-├── .env.local                       # API keys (gitignored)
-├── vercel.json                      # Security headers (CSP, HSTS, X-Frame-Options)
-├── vitest.config.ts                 # Test configuration
+│       ├── Collapsible.test.tsx        # 20 tests — accordion, locked mode, aria, chevron, opacity
+│       ├── costs.test.ts              # 12 tests — cost calculation, formatting, edge cases
+│       ├── genres.test.ts             # 5 tests — genre list integrity, random selection
+│       ├── issueOneRegression.test.ts # 10 tests — architecture guards for critical patterns
+│       ├── issueTwoRegression.test.ts # 16 tests — loading UX guards, pipeline config
+│       ├── loadingMessages.test.ts    # 10 tests — themed message arrays, pickRandom
+│       ├── LoadingState.test.tsx      # 14 tests — phases, timers, auto-expand/collapse, locked
+│       ├── pipelineConfig.test.ts     # 16 tests — pipeline models (Haiku + Flash), shared prompt
+│       ├── rateLimit.test.ts          # 15 tests — allow/block, per-IP tracking, window reset
+│       ├── StoryCard.test.tsx         # 36 tests — rendering, audio, genre, controls, accordion
+│       ├── ttsRoute.test.ts           # 16 tests — TTS validation, voice config (Flash v2.5)
+│       ├── useBackgroundMusic.test.ts # 36 tests — audio source, warmUp, fade-in/out, cleanup
+│       └── validation.test.ts         # 18 tests — input validation, monthName, buildUserMessage
+├── .env.local                         # API keys (gitignored)
+├── vercel.json                        # Security headers (CSP, HSTS, X-Frame-Options)
+├── vitest.config.ts                   # Test configuration
 └── package.json
 ```
 
@@ -206,6 +215,32 @@ Code quality pass — removed dead code, fixed bugs, optimized performance.
 - Target pipeline: Story ~3-4s (Haiku) + Audio ~5-8s (Flash) = ~8-12s with server overlap
 - 94 tests passing
 
+### MVP 9 — Voyagers! Music + Autoplay Fix (March 15, 2026)
+
+Replaced ambient music with Voyagers!-themed soundtrack and fixed audio reliability.
+
+- Replaced dreamscape piano with **Chronostream Runner** — a Voyagers!-themed ambient track
+- Fixed browser autoplay silence with `warmUp()` pattern for background music (mirrors TTS warmUp)
+- Professional **fade-in (2s) / fade-out (3s)** with asymmetric durations — mirrors broadcast audio practice
+- Reduced volume to 12% for the fuller orchestral track
+- Background music fades out gracefully after narration copyright outro finishes
+- Themed loading messages: archive/scroll phase ("Searching the archives...") and Voyagers! phase ("The Omni is locked on...")
+- Per-request cost estimation displayed on story card (Claude input/output tokens + ElevenLabs characters)
+- 209 tests passing
+
+### MVP 10 — System-Controlled Collapsible Accordion (March 15, 2026)
+
+Cards persist in DOM — system choreographs expand/collapse for a polished UX.
+
+- Reusable `<Collapsible>` component with `locked` mode — system-controlled expand/collapse, no user toggle
+- LoadingState and StoryCard **persist in DOM permanently** — no more conditional unmount/remount
+- LoadingState auto-expands during pipeline processing, auto-collapses when narration starts
+- StoryCard auto-expands when narration begins playing
+- Non-interactive headers with animated chevron indicator (rotates on state change)
+- Smooth `maxHeight` + opacity transitions via measured `scrollHeight`
+- Cards stay visible as collapsed headers even when not active
+- 214 tests passing
+
 ## API Token Costs
 
 Every request to the app makes two API calls: one to Anthropic (story generation) and one to ElevenLabs (voice narration). Here's the full cost breakdown.
@@ -291,19 +326,25 @@ ElevenLabs pricing varies by plan:
 ## Testing
 
 ```bash
-npm test          # Run all 94 tests
-npm run test:watch # Watch mode
+pnpm test          # Run all 214+ tests
+pnpm test:watch    # Watch mode
 ```
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
+| useBackgroundMusic.test.ts | 36 | Audio source, warmUp, fade-in/out, mute, cleanup, page integration |
+| StoryCard.test.tsx | 36 | Rendering, audio controls, genre badge, download, music toggle, accordion |
+| Collapsible.test.tsx | 20 | Accordion toggle, locked mode, aria attrs, chevron rotation, opacity |
 | validation.test.ts | 18 | Input validation, monthName, buildUserMessage, genre validation |
-| rateLimit.test.ts | 5 | Allow/block, per-IP tracking, window reset |
-| StoryCard.test.tsx | 29 | Rendering, audio controls, genre badge, download, music toggle, timing label |
-| LoadingState.test.tsx | 5 | Loading text, skeleton lines, custom messages, elapsed timer |
-| genres.test.ts | 5 | Genre list integrity, random selection |
 | ttsRoute.test.ts | 16 | TTS validation, voice config (Flash v2.5), voice settings |
-| pipelineConfig.test.ts | 16 | Pipeline models (Haiku 4.5 + Flash), retired model guard, shared prompt, tool schema |
+| issueTwoRegression.test.ts | 16 | Loading UX guards, pipeline config, architecture regression |
+| pipelineConfig.test.ts | 16 | Pipeline models (Haiku 4.5 + Flash), retired model guard, shared prompt |
+| rateLimit.test.ts | 15 | Allow/block, per-IP tracking, window reset, concurrent requests |
+| LoadingState.test.tsx | 14 | Phases, live timers, auto-expand/collapse, locked mode, custom messages |
+| costs.test.ts | 12 | Cost calculation, formatting, edge cases, token/char pricing |
+| issueOneRegression.test.ts | 10 | Critical architecture guards (warmUp, playBlob, pipeline helpers) |
+| loadingMessages.test.ts | 10 | Themed message arrays, pickRandom, Voyagers! messages |
+| genres.test.ts | 5 | Genre list integrity, random selection |
 
 ## The Story Behind the Build
 
@@ -313,17 +354,19 @@ The core idea: history doesn't have to read like a textbook. Every date has a st
 
 MVP 2 and MVP 3 elevated the experience from reading to listening — adding voice narration and ambient music turned a text app into something closer to an audio documentary experience, all generated on demand. MVP 4 added genre-based discovery, MVP 5 made the entire audio pipeline automatic, MVP 6 fixed browser autoplay compliance and added real-time pipeline performance metrics, MVP 7 cleaned up code quality and fixed bugs, and MVP 8 introduced a unified streaming pipeline with faster AI models to cut total generation time from ~31s to ~8-12s.
 
+MVP 9 brought the Voyagers!-themed Chronostream Runner soundtrack with professional fade-in/fade-out, and MVP 10 added system-controlled collapsible accordion sections — the LoadingState and StoryCard now persist in the DOM permanently with choreographed expand/collapse transitions, preventing premature button clicks before audio is ready.
+
 ## Build Timeline
 
 | Metric | Build Guide Estimate | Actual |
 |--------|---------------------|--------|
-| Total timeline | 3 days (8-11 hrs) | 2 evening sessions |
+| Total timeline | 3 days (8-11 hrs) | 3 evening sessions |
 | MVP 1 complete | Day 1-2 | March 13, 2026 (3.5 hrs) |
 | MVP 2 + MVP 3 complete | — | March 14, 2026 (1.5 hrs) |
 | MVP 4 + MVP 5 + MVP 6 complete | — | March 14, 2026 (same session) |
 | MVP 7 + MVP 8 complete | — | March 14, 2026 (same session) |
-| Total time | 8-11 hrs | ~6 hrs |
-| Time saved | — | ~40-50% |
+| MVP 9 + MVP 10 complete | — | March 15, 2026 |
+| Total time | 8-11 hrs | ~8 hrs |
 | Built with | — | Claude Code + Kajiro IQ Pro |
 
 ## License
