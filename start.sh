@@ -65,7 +65,7 @@ if [ -f "$PROJECT_DIR/.env.local" ]; then
   while IFS='=' read -r key value; do
     # Skip comments and empty lines
     [[ -z "$key" || "$key" == \#* ]] && continue
-    export "$key=$value"
+    declare -x "$key=$value"
   done < "$PROJECT_DIR/.env.local"
   echo "   Loaded .env.local"
 fi
