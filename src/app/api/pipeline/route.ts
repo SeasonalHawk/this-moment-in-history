@@ -85,6 +85,9 @@ export async function POST(request: NextRequest) {
           mlaCitation: input.mlaCitation || null,
           date: { month, day },
           genre: genre || null,
+          // Token usage for cost estimation (Issue #2)
+          inputTokens: message.usage.input_tokens,
+          outputTokens: message.usage.output_tokens,
         }) + '\n'));
 
         // ── Phase 2: Generate TTS with ElevenLabs Flash ────────────
@@ -132,6 +135,8 @@ export async function POST(request: NextRequest) {
         controller.enqueue(encoder.encode(JSON.stringify({
           type: 'audio',
           audio: base64Audio,
+          // Character count for cost estimation (Issue #2)
+          ttsCharacters: fullText.length,
         }) + '\n'));
 
       } catch (err: unknown) {

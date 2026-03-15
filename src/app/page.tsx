@@ -4,11 +4,13 @@ import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import CalendarPicker from '@/components/CalendarPicker';
 import StoryCard from '@/components/StoryCard';
-import LoadingState from '@/components/LoadingState';
+import LoadingState, { type LoadingPhase } from '@/components/LoadingState';
 import useHistoryStory from '@/hooks/useHistoryStory';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useBackgroundMusic } from '@/hooks/useBackgroundMusic';
 import { getRandomGenre } from '@/lib/genres';
+import { pickRandom, STORY_PHASE_MESSAGES, AUDIO_PHASE_MESSAGES } from '@/lib/loadingMessages';
+import { calculateCost, formatCost, type CostData } from '@/lib/costs';
 
 interface PipelineTiming {
   storyMs: number | null;
@@ -21,6 +23,8 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [pipelineStart, setPipelineStart] = useState<number | null>(null);
   const [timing, setTiming] = useState<PipelineTiming>({ storyMs: null, audioMs: null });
+  const [phases, setPhases] = useState<LoadingPhase[]>([]);
+  const [costData, setCostData] = useState<CostData | null>(null);
   const phaseStartRef = useRef<number>(0);
 
   const history = useHistoryStory();
@@ -39,10 +43,19 @@ export default function Home() {
     tts.cleanup();
     bgMusic.stop();
     setTiming({ storyMs: null, audioMs: null });
+    setCostData(null);
 
     const now = Date.now();
     setPipelineStart(now);
     phaseStartRef.current = now;
+
+    // Pick random themed messages for this run
+    const storyMsg = pickRandom(STORY_PHASE_MESSAGES);
+    const audioMsg = pickRandom(AUDIO_PHASE_MESSAGES);
+    setPhases([
+      { label: storyMsg, startTime: now },
+      { label: audioMsg, startTime: 0 },
+    ]);
 
     // Warm up audio element during user click to satisfy autoplay policy
     tts.warmUp();
@@ -80,9 +93,21 @@ export default function Home() {
           const event = JSON.parse(line);
 
           if (event.type === 'story') {
-            const storyMs = Date.now() - phaseStartRef.current;
+            const storyEnd = Date.now();
+            const storyMs = storyEnd - phaseStartRef.current;
             setTiming(prev => ({ ...prev, storyMs }));
-            phaseStartRef.current = Date.now();
+            phaseStartRef.current = storyEnd;
+
+            // Close phase 1, open phase 2
+            setPhases(prev => [
+              { ...prev[0], endTime: storyEnd },
+              { ...prev[1], startTime: storyEnd },
+            ]);
+
+            // Capture token usage for cost estimation
+            if (event.inputTokens !== undefined && event.outputTokens !== undefined) {
+              setCostData({ inputTokens: event.inputTokens, outputTokens: event.outputTokens, ttsCharacters: 0 });
+            }
 
             // Display story immediately — TTS is already generating on the server
             history.setResult({
@@ -95,13 +120,25 @@ export default function Home() {
               genre: event.genre,
             });
 
-            // Show "Finding our history professor..." while audio generates
+            // Show audio phase message while audio generates
             tts.setLoadingState(true);
           }
 
           if (event.type === 'audio') {
-            const audioMs = Date.now() - phaseStartRef.current;
+            const audioEnd = Date.now();
+            const audioMs = audioEnd - phaseStartRef.current;
             setTiming(prev => ({ ...prev, audioMs }));
+
+            // Close phase 2
+            setPhases(prev => [
+              prev[0],
+              { ...prev[1], endTime: audioEnd },
+            ]);
+
+            // Capture TTS character count for cost estimation
+            if (event.ttsCharacters !== undefined) {
+              setCostData(prev => prev ? { ...prev, ttsCharacters: event.ttsCharacters } : prev);
+            }
 
             // Decode base64 → blob → play
             const binaryString = atob(event.audio);
@@ -177,8 +214,9 @@ export default function Home() {
         />
 
         {/* Story Area */}
-        {history.loading && <LoadingState message="Uncovering history..." startTime={pipelineStart} />}
-        {tts.loading && !history.loading && <LoadingState message="Finding our history professor..." startTime={pipelineStart} />}
+        {(history.loading || tts.loading) && phases.length > 0 && (
+          <LoadingState phases={phases} pipelineStart={pipelineStart} />
+        )}
 
         {history.error && (
           <div className="bg-red-900/30 border border-red-800 rounded-xl p-4 max-w-2xl mx-auto text-center">
@@ -215,7 +253,11 @@ export default function Home() {
             onToggleMusic={bgMusic.toggleMute}
             timingLabel={
               timing.storyMs !== null && timing.audioMs !== null
-                ? `Story ${formatMs(timing.storyMs)} · Audio ${formatMs(timing.audioMs)} · Total ${formatMs(timing.storyMs + timing.audioMs)}`
+                ? `Story ${formatMs(timing.storyMs)} · Narration ${formatMs(timing.audioMs)} · Total ${formatMs(timing.storyMs + timing.audioMs)}${
+                    costData && costData.ttsCharacters > 0
+                      ? ` · Est. cost: ${formatCost(calculateCost(costData))}`
+                      : ''
+                  }`
                 : timing.storyMs !== null
                   ? `Story ${formatMs(timing.storyMs)}`
                   : undefined
