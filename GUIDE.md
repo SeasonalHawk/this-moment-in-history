@@ -2,7 +2,7 @@
 
 **Author:** Kenneth Benavides
 **Built with:** Claude Code + Kajiro IQ Pro
-**Version:** MVP 8 (March 2026)
+**Version:** MVP 10 (March 2026)
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## What This Project Is
 
-This Moment in History is an AI-powered creative nonfiction storytelling application with voice narration. You pick any calendar date. The app generates a vivid 150-200 word historical vignette -- not a Wikipedia summary, but an immersive second-person narrative that drops you into a real moment from the past. A narrator reads the story aloud over soft ambient piano music. The entire experience -- story, audio, music -- generates on demand in under 12 seconds.
+This Moment in History is an AI-powered creative nonfiction storytelling application with voice narration. You pick any calendar date. The app generates a vivid 150-200 word historical vignette -- not a Wikipedia summary, but an immersive second-person narrative that drops you into a real moment from the past. A narrator reads the story aloud over Voyagers!-themed background music. The entire experience -- story, audio, music -- generates on demand in under 12 seconds.
 
 Every story is grounded in historical fact. Every story is written like literary journalism. Every story comes with an event title, year, and MLA 9th edition citation.
 
@@ -43,7 +43,7 @@ Most "this day in history" apps give you a list of bullet points. A sentence abo
 
 This project started from a different premise: every date has a story worth *feeling*. Not as a list, but as a moment. The smell of gunpowder. The sound of a crowd. The weight of a decision made in a room with bad lighting. The AI system prompt enforces literary journalism rules -- sensory details, real people, real places, present tense, second person. The result reads like the opening paragraph of a magazine feature, not an encyclopedia entry.
 
-The technical goal was equally specific: build a production-quality AI application from zero to deployed in a 3-day sprint, using Claude Code and the Kajiro IQ Pro prompt optimization framework. What was estimated to take 8-11 hours was completed in approximately 6 hours across two evening sessions, shipping 8 MVPs with 92 passing tests.
+The technical goal was equally specific: build a production-quality AI application from zero to deployed in a 3-day sprint, using Claude Code and the Kajiro IQ Pro prompt optimization framework. What was estimated to take 8-11 hours was completed in approximately 8 hours across three evening sessions, shipping 10 MVPs with 214 passing tests.
 
 ---
 
@@ -53,11 +53,13 @@ The technical goal was equally specific: build a production-quality AI applicati
 |-----------|-------------|
 | **Date-Based Storytelling** | Pick any date from the calendar. Receive a historically accurate creative nonfiction vignette set on that date. |
 | **Voice Narration** | Every story is automatically narrated by Adam -- a deep, authoritative voice via ElevenLabs TTS. |
-| **Background Music** | Soft dreamscape piano loop plays during narration at 15% volume with a 2-second fade-in. |
+| **Voyagers! Music** | Chronostream Runner ambient soundtrack plays during narration at 12% volume with 2s fade-in and 3s fade-out. |
 | **Genre Discovery** | "Random History" picks a random date and applies one of 20 genre lenses (True Crime, Espionage, Science, Love, War, and 15 more). |
 | **Audio Controls** | Play/Pause, Replay from start, Download as MP3, Mute/Unmute background music. |
-| **Real-Time Timing** | Pipeline timing breakdown shows exactly how long story generation and audio generation take. |
+| **System-Controlled Accordion** | LoadingState and StoryCard persist in DOM with choreographed expand/collapse transitions -- no user toggle, system controls visibility. |
+| **Real-Time Timing + Cost** | Pipeline timing breakdown and per-request cost estimation (Claude tokens + ElevenLabs characters) displayed on every story. |
 | **Streaming Pipeline** | Unified server endpoint overlaps story and audio generation. Story displays while audio is still being created. |
+| **Themed Loading Messages** | Random archive-themed ("Searching the archives...") and Voyagers!-themed ("The Omni is locked on...") messages during generation. |
 | **Branding Outro** | Every audio file ends with the event title, date, year, and "This audio is created by This Moment in History. Copyright 2026." |
 
 ---
@@ -108,9 +110,13 @@ Flash v2.5 generates audio for a 150-word story in approximately 5-8 seconds ver
 | `similarity_boost` | 0.75 | Strong voice consistency across stories |
 | `style` | 0 | Disabled -- reduces latency with minimal audible difference for narrator-style speech |
 
-### Background Music: Static Asset
+### Background Music: Static Asset (Voyagers! Theme)
 
-**Why not generated per request:** The ambient piano loop is generated once via ElevenLabs Sound Effects API and saved as a static asset (`public/audio/ambient-bg.mp3`). This means zero per-request cost, zero latency, and consistent audio across sessions. The music loops infinitely at 15% volume -- subtle enough to enhance without distracting.
+**Why not generated per request:** The Chronostream Runner soundtrack is generated once via ElevenLabs Sound Effects API and saved as a static asset (`public/audio/chronostream-runner.mp3`). This means zero per-request cost, zero latency, and consistent audio across sessions. The music loops at 12% volume -- tuned for the fuller Voyagers!-themed orchestral track.
+
+**Why asymmetric fade:** Fade-in is 2 seconds, fade-out is 3 seconds. This mirrors broadcast audio practice -- listeners notice abrupt silence more than a slow swell. The longer fade-out creates a professional trail-off after the narration copyright outro finishes.
+
+**warmUp() for background music:** Like TTS, the background music Audio element must be created synchronously during a user click to satisfy browser autoplay policy. The `bgMusic.warmUp()` call in `page.tsx` runs in the same click handler as `tts.warmUp()`.
 
 ### Calendar: react-day-picker + date-fns
 
@@ -120,7 +126,7 @@ Flash v2.5 generates audio for a 150-word story in approximately 5-8 seconds ver
 
 ### Testing: Vitest + React Testing Library
 
-**Why Vitest over Jest:** Native TypeScript support, faster execution (2.5 seconds for 92 tests), and first-class Vite integration. The `jsdom` environment simulates browser APIs for component testing without a real browser.
+**Why Vitest over Jest:** Native TypeScript support, faster execution (2.5 seconds for 214 tests), and first-class Vite integration. The `jsdom` environment simulates browser APIs for component testing without a real browser.
 
 **Why React Testing Library:** Tests user-visible behavior, not implementation details. Tests query by text content ("Random History", "Pause"), not by CSS classes or component internals.
 
@@ -136,10 +142,12 @@ User clicks a date (or "Random History")
     v
 page.tsx: runPipeline(date, genre?)
     |
-    |-- tts.cleanup()           // Destroy previous audio
-    |-- bgMusic.stop()          // Stop previous music
-    |-- tts.warmUp()            // Create Audio element (autoplay policy)
-    |-- history.startLoading()  // Show "Uncovering history..."
+    |-- tts.cleanup()            // Destroy previous audio element + blob
+    |-- bgMusic.stop()           // Hard stop previous music
+    |-- tts.warmUp()             // Create TTS Audio element (autoplay policy)
+    |-- bgMusic.warmUp()         // Create bg Audio element (autoplay policy)
+    |-- history.startLoading()   // Set loading state
+    |-- setPhases([story, audio]) // Pick random themed loading messages
     |
     v
 fetch('/api/pipeline', { month, day, genre })
@@ -153,27 +161,33 @@ pipeline/route.ts (server):
     |-- Phase 1: Claude Haiku   // ~3-4 seconds
     |   |-- System prompt + tool_choice
     |   |-- Returns: story, eventTitle, eventYear, mlaCitation
-    |   |-- STREAM: {"type":"story", ...}\n  --> client displays story
+    |   |-- STREAM: {"type":"story", ..., inputTokens, outputTokens}\n
     |
     |-- Phase 2: ElevenLabs Flash  // ~5-8 seconds (starts immediately)
     |   |-- story + outro text --> audio bytes
-    |   |-- STREAM: {"type":"audio", "audio":"<base64>"}\n
+    |   |-- STREAM: {"type":"audio", "audio":"<base64>", ttsCharacters}\n
     |
     v
 page.tsx (client reads NDJSON stream):
     |
     |-- "story" event:
-    |   |-- history.setResult()      // Display story immediately
-    |   |-- tts.setLoadingState(true) // "Finding our history professor..."
+    |   |-- history.setResult()         // Display story immediately
+    |   |-- tts.setLoadingState(true)   // Show Voyagers!-themed message
+    |   |-- setCostData(tokens)         // Begin cost estimation
+    |   |-- LoadingState phase 1 closes, phase 2 opens
     |
     |-- "audio" event:
     |   |-- Decode base64 --> Blob
-    |   |-- tts.playBlob(blob)       // Auto-play narration
-    |   |-- bgMusic.play()           // Fade in ambient music
+    |   |-- tts.playBlob(blob)          // Auto-play narration
+    |   |-- bgMusic.play()              // Fade in Voyagers! music (2s)
+    |   |-- setCostData(chars)          // Complete cost estimation
+    |   |-- LoadingState auto-collapses, StoryCard auto-expands
     |
     v
-User hears narration with background music.
-Controls available: Play/Pause, Replay, Download, Mute Music, Random History.
+User hears narration with Voyagers! background music.
+    |-- When narration ends: bgMusic.fadeOut() (3s fade)
+    |-- Controls: Play/Pause, Replay, Download, Mute Music, Random History
+    |-- Timing + cost estimate displayed on StoryCard
 ```
 
 ### The NDJSON Streaming Protocol
@@ -226,6 +240,36 @@ cleanup()  --> .pause(), removeEventListener, revokeObjectURL, null refs
 ```
 
 The `handleEndedRef` pattern uses `useRef` for the event handler to maintain stable identity across renders. Without this, `addEventListener` and `removeEventListener` would receive different function references, causing ghost listeners that fire multiple times.
+
+### Background Music Lifecycle
+
+The `useBackgroundMusic` hook manages the Voyagers!-themed Chronostream Runner soundtrack:
+
+```
+warmUp()   --> getAudio() (lazy init, sets loop + preload + volume 0)
+play()     --> reset to start, fade from 0 to 12% over 2 seconds
+fadeOut()   --> fade from current volume to 0 over 3 seconds, then pause + reset
+stop()     --> immediate pause + reset (pipeline restart)
+pause()    --> pause without reset (sync with narrator pause)
+resume()   --> resume playback (sync with narrator resume)
+toggleMute() --> mute/unmute without affecting playback state
+```
+
+The asymmetric fade (2s in, 3s out) mirrors broadcast audio practice. Listeners notice abrupt silence more than a slow swell, so the fade-out is 50% longer than the fade-in.
+
+### System-Controlled UI Choreography
+
+LoadingState and StoryCard both use the `<Collapsible>` component in `locked` mode. This means:
+
+1. **Cards persist in DOM permanently** -- once mounted, they are never unmounted. Visibility is controlled entirely by the `expanded` prop, not by conditional rendering.
+2. **Headers are non-interactive** -- rendered as `<div>` elements instead of `<button>` elements. No user toggle, no cursor pointer, no click handler.
+3. **Expand/collapse is derived from props** -- `const expanded = autoExpand` in StoryCard, `const expanded = autoExpand && !autoCollapse` in LoadingState. No internal `useState` or `useEffect` for expand state.
+
+The choreography sequence:
+- Pipeline starts → LoadingState expands (shows loading phases)
+- Story arrives → LoadingState phase 1 closes, phase 2 opens
+- Audio arrives → LoadingState collapses, StoryCard expands
+- Both cards remain visible as collapsed headers when not active
 
 ---
 
@@ -339,7 +383,7 @@ Learn more: [https://kajiro.org](https://kajiro.org)
 
 ## The MVP Development Approach
 
-The project was built in 8 incremental MVPs, each adding a distinct capability layer. Every MVP was committed, tested, and pushed before the next began.
+The project was built in 10 incremental MVPs, each adding a distinct capability layer. Every MVP was committed, tested, and pushed before the next began.
 
 ### Why MVPs Matter
 
@@ -350,7 +394,7 @@ Each MVP produces a *working application*. If development stopped at MVP 1, you'
 - Forces clean interfaces (each layer must work with what exists)
 - Makes code review tractable (small, focused diffs)
 
-### The 8 Layers
+### The 10 Layers
 
 | MVP | Name | What It Added | Key Technical Decision |
 |-----|------|---------------|----------------------|
@@ -362,12 +406,14 @@ Each MVP produces a *working application*. If development stopped at MVP 1, you'
 | 6 | Autoplay Fix + Timing | Browser autoplay compliance + timers | `warmUp()` pattern + `useRef` for timing |
 | 7 | Efficiency Review | Bug fixes + code cleanup | `handleEndedRef` identity fix, dead prop removal |
 | 8 | Streaming Pipeline | NDJSON streaming + faster models | Server-side overlap, Haiku + Flash |
+| 9 | Voyagers! Music | Themed soundtrack + cost estimation | Asymmetric fade, bgMusic warmUp, themed loading messages |
+| 10 | System-Controlled Accordion | Persistent DOM cards + locked Collapsible | Derived state from props, non-interactive headers |
 
 ### How Each Layer Built on the Last
 
-MVP 1 established the data model (story + metadata). MVP 2 consumed that data model for narration. MVP 3 synced with MVP 2's playback events. MVP 4 extended MVP 1's API with genre support. MVP 5 unified MVPs 1-4 into an automatic pipeline. MVP 6 fixed a browser-level bug from MVP 5. MVP 7 cleaned up technical debt from MVPs 1-6. MVP 8 replaced the sequential architecture from MVP 5 with a streaming pipeline.
+MVP 1 established the data model (story + metadata). MVP 2 consumed that data model for narration. MVP 3 synced with MVP 2's playback events. MVP 4 extended MVP 1's API with genre support. MVP 5 unified MVPs 1-4 into an automatic pipeline. MVP 6 fixed a browser-level bug from MVP 5. MVP 7 cleaned up technical debt from MVPs 1-6. MVP 8 replaced the sequential architecture from MVP 5 with a streaming pipeline. MVP 9 replaced the ambient piano with the Voyagers!-themed Chronostream Runner and added cost transparency. MVP 10 introduced the locked Collapsible pattern and made cards persist in the DOM permanently.
 
-Each MVP's interface contract was preserved. `StoryCard` still accepts the same props it has since MVP 6. `useTextToSpeech` still exposes `speak()` even though the pipeline now uses `playBlob()`. Backward compatibility was maintained at every layer.
+Each MVP's interface contract was preserved. `StoryCard` still accepts the same props it has since MVP 6 (plus `autoExpand` from MVP 10). `useTextToSpeech` still exposes `speak()` even though the pipeline now uses `playBlob()`. Backward compatibility was maintained at every layer.
 
 ---
 
@@ -413,17 +459,23 @@ Deployed via `vercel.json`:
 
 ## Testing Strategy
 
-### 92 Tests Across 7 Test Files
+### 214 Tests Across 13 Test Files
 
 | File | Tests | What It Covers |
 |------|-------|----------------|
+| `useBackgroundMusic.test.ts` | 36 | Audio source, warmUp, fade-in/out timing, mute toggle, cleanup, page integration |
+| `StoryCard.test.tsx` | 36 | Story rendering, audio controls, genre badge, download, music toggle, locked accordion |
+| `Collapsible.test.tsx` | 20 | Interactive toggle, locked mode, aria attributes, chevron rotation, opacity transitions |
 | `validation.test.ts` | 18 | Input validation for month, day, genre. Month name mapping. User message construction with and without genre. |
-| `rateLimit.test.ts` | 5 | Allow/block logic, per-IP tracking, window reset after expiration. |
-| `StoryCard.test.tsx` | 29 | Story rendering, date formatting, event title/year display, MLA citation, genre badge, all audio controls (play/pause/replay/download), music mute toggle, timing label, spinning state. |
-| `LoadingState.test.tsx` | 5 | Default message, custom message, skeleton lines, elapsed timer with startTime, no timer without startTime. |
-| `genres.test.ts` | 5 | Genre list has 20 entries, all are non-empty strings, `getRandomGenre()` returns a valid genre. |
-| `ttsRoute.test.ts` | 16 | Voice ID matches Adam, model is Flash v2.5, API URL construction, text validation (empty, null, whitespace, length limits), voice settings ranges. |
-| `pipelineConfig.test.ts` | 14 | Pipeline models (Haiku + Flash), shared system prompt content (voice rules, tense, anti-patterns, word count), vignette tool schema (name, required fields, property types). |
+| `ttsRoute.test.ts` | 16 | Voice ID (Adam), model (Flash v2.5), API URL, text validation, voice settings |
+| `issueTwoRegression.test.ts` | 16 | Loading UX guards, pipeline config, architecture regression tests |
+| `pipelineConfig.test.ts` | 16 | Pipeline models (Haiku + Flash), retired model guard, shared prompt content |
+| `rateLimit.test.ts` | 15 | Allow/block logic, per-IP tracking, window reset, concurrent request handling |
+| `LoadingState.test.tsx` | 14 | Phases, live timers, auto-expand/collapse, locked mode, themed messages |
+| `costs.test.ts` | 12 | Cost calculation accuracy, formatting, edge cases, token/character pricing |
+| `issueOneRegression.test.ts` | 10 | Architecture guards -- warmUp, playBlob, pipeline helpers, handleEndedRef |
+| `loadingMessages.test.ts` | 10 | Message array integrity, pickRandom distribution, Voyagers! theme messages |
+| `genres.test.ts` | 5 | Genre list integrity, random selection |
 
 ### Testing Philosophy
 
@@ -458,7 +510,7 @@ Configuration tests verify that hardcoded constants match expected values -- cat
 ```bash
 git clone https://github.com/SeasonalHawk/this-moment-in-history.git
 cd this-moment-in-history
-npm install
+pnpm install
 ```
 
 Create `.env.local`:
@@ -471,9 +523,9 @@ ELEVENLABS_API_KEY=your-elevenlabs-key
 ### Run
 
 ```bash
-npm run dev        # Start development server on http://localhost:3000
-npm test           # Run all 92 tests
-npm run build      # Production build
+pnpm dev           # Start development server on http://localhost:3000
+pnpm test          # Run all 214 tests
+pnpm build         # Production build
 ```
 
 ### Optional Configuration
@@ -516,9 +568,10 @@ Edit `src/lib/prompts.ts` for the system prompt, or the model string in:
 
 ### Replace Background Music
 
-1. Replace `public/audio/ambient-bg.mp3` with your audio file
+1. Replace `public/audio/chronostream-runner.mp3` with your audio file
 2. Ensure it loops cleanly (the `<audio>` element has `loop: true`)
-3. Adjust `TARGET_VOLUME` in `src/hooks/useBackgroundMusic.ts` if needed
+3. Adjust `TARGET_VOLUME` in `src/hooks/useBackgroundMusic.ts` (currently 0.12 for the fuller orchestral track -- simpler tracks may work better at higher volumes)
+4. Test fade-in/out durations -- `FADE_IN_MS` and `FADE_OUT_MS` may need tuning for different track characters
 
 ---
 
@@ -547,6 +600,14 @@ Claude's `tool_use` with `tool_choice` guarantees typed JSON output. No regex pa
 ### 6. MVPs Compound
 
 Each MVP took less time than the one before because the interfaces were already defined. MVP 8 (streaming pipeline) reused the same `StoryCard` component from MVP 1, the same `useTextToSpeech` hook from MVP 2, and the same validation logic from MVP 1. The hooks just gained new methods (`playBlob`, `setLoadingState`) without breaking existing ones.
+
+### 7. Persistent DOM Beats Conditional Rendering for Animated Components
+
+MVP 10 revealed that conditionally rendering components (`{loading && <LoadingState />}`) causes them to unmount and lose all animation state. When the component remounts, it flashes -- no smooth transition, no collapsed header, just a jarring pop-in. Keeping components in the DOM permanently and controlling visibility via props (locked Collapsible, `autoExpand`) produces polished transitions without flash-of-unmount bugs. The cost is trivial -- a few hidden DOM nodes.
+
+### 8. Asymmetric Fade Durations Mirror Broadcast Practice
+
+Fade-in and fade-out don't need to be symmetrical. The Voyagers! music uses 2 seconds fade-in but 3 seconds fade-out. Listeners notice abrupt silence more than a slow swell, so the fade-out is 50% longer. This small asymmetry creates a noticeably more professional audio experience -- the music trails off gracefully after the narration copyright outro instead of cutting abruptly.
 
 ---
 
