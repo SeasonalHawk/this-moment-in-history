@@ -31,12 +31,26 @@ describe('useBackgroundMusic: volume and fade config', () => {
     expect(hookSource).toContain('TARGET_VOLUME = 0.12');
   });
 
-  it('FADE_DURATION_MS is defined', () => {
-    expect(hookSource).toContain('FADE_DURATION_MS');
+  it('FADE_IN_MS is defined for fade-in duration', () => {
+    expect(hookSource).toContain('FADE_IN_MS');
+  });
+
+  it('FADE_OUT_MS is defined for fade-out duration', () => {
+    expect(hookSource).toContain('FADE_OUT_MS');
   });
 
   it('FADE_INTERVAL_MS is defined', () => {
     expect(hookSource).toContain('FADE_INTERVAL_MS');
+  });
+
+  it('fade-out is longer than fade-in for a professional trail-off', () => {
+    const fadeInMatch = hookSource.match(/FADE_IN_MS\s*=\s*(\d+)/);
+    const fadeOutMatch = hookSource.match(/FADE_OUT_MS\s*=\s*(\d+)/);
+    expect(fadeInMatch).not.toBeNull();
+    expect(fadeOutMatch).not.toBeNull();
+    const fadeIn = Number(fadeInMatch![1]);
+    const fadeOut = Number(fadeOutMatch![1]);
+    expect(fadeOut).toBeGreaterThan(fadeIn);
   });
 });
 
@@ -104,6 +118,34 @@ describe('useBackgroundMusic: fade-in logic', () => {
     expect(hookSource).toContain('TARGET_VOLUME / steps');
     expect(hookSource).toContain('currentVol += increment');
   });
+
+  it('fade-in uses FADE_IN_MS for step calculation', () => {
+    expect(hookSource).toContain('FADE_IN_MS / FADE_INTERVAL_MS');
+  });
+});
+
+describe('useBackgroundMusic: fade-out logic', () => {
+  it('exports fadeOut method', () => {
+    expect(hookSource).toMatch(/return\s*\{[^}]*fadeOut[^}]*\}/);
+  });
+
+  it('fadeOut decrements volume toward 0', () => {
+    expect(hookSource).toContain('currentVol -= decrement');
+  });
+
+  it('fadeOut uses FADE_OUT_MS for step calculation', () => {
+    expect(hookSource).toContain('FADE_OUT_MS / FADE_INTERVAL_MS');
+  });
+
+  it('fadeOut pauses and resets audio when volume reaches 0', () => {
+    // After fade-out completes, the audio should be paused and reset
+    expect(hookSource).toContain('currentVol <= 0');
+  });
+
+  it('fadeOut handles already-silent audio gracefully', () => {
+    // If volume is already 0, should pause immediately without fading
+    expect(hookSource).toContain('startVol <= 0');
+  });
 });
 
 describe('useBackgroundMusic: cleanup', () => {
@@ -139,8 +181,15 @@ describe('page.tsx: background music warm-up (autoplay fix)', () => {
     expect(pageSource).toContain('onStart: () => bgMusic.play()');
   });
 
-  it('bgMusic.stop is passed as onEnd callback to TTS', () => {
-    expect(pageSource).toContain('onEnd: () => bgMusic.stop()');
+  it('bgMusic.fadeOut is passed as onEnd callback for graceful trail-off', () => {
+    expect(pageSource).toContain('onEnd: () => bgMusic.fadeOut()');
+  });
+
+  it('bgMusic.stop is used for hard reset on pipeline restart (not onEnd)', () => {
+    // stop() should be called at the top of runPipeline for clean reset,
+    // but NOT as the onEnd callback (fadeOut is used there instead)
+    expect(pageSource).toContain('bgMusic.stop()');
+    expect(pageSource).not.toContain('onEnd: () => bgMusic.stop()');
   });
 });
 
