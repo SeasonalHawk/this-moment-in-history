@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://thismomentinhistory.com'),
   title: "This Moment in History",
   description: "Pick a date. Step into the past. AI-powered historical storytelling with voice narration.",
   icons: {
