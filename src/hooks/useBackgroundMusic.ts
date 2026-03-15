@@ -2,8 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-const BG_MUSIC_URL = '/audio/ambient-bg.mp3';
-const TARGET_VOLUME = 0.15; // 15% volume
+const BG_MUSIC_URL = '/audio/chronostream-runner.mp3';
+const TARGET_VOLUME = 0.12; // 12% volume — tuned for the fuller Voyagers!-themed track
 const FADE_DURATION_MS = 2000; // 2 seconds fade-in
 const FADE_INTERVAL_MS = 50; // Update every 50ms
 
