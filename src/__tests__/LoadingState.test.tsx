@@ -1,35 +1,76 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import LoadingState from '@/components/LoadingState';
+import LoadingState, { type LoadingPhase } from '@/components/LoadingState';
+
+const now = Date.now();
+
+const activePhases: LoadingPhase[] = [
+  { label: 'Searching the archives...', startTime: now - 3000 },
+  { label: 'Firing up the time machine...', startTime: 0 },
+];
+
+const completedStoryPhases: LoadingPhase[] = [
+  { label: 'Searching the archives...', startTime: now - 6000, endTime: now - 3000 },
+  { label: 'Firing up the time machine...', startTime: now - 3000 },
+];
+
+const allCompletedPhases: LoadingPhase[] = [
+  { label: 'Searching the archives...', startTime: now - 6000, endTime: now - 3000 },
+  { label: 'Firing up the time machine...', startTime: now - 3000, endTime: now },
+];
 
 describe('LoadingState', () => {
-  it('renders default loading text when no message prop', () => {
-    render(<LoadingState />);
-    expect(screen.getByText('Uncovering history...')).toBeInTheDocument();
+  it('renders phase list with correct number of phases', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now - 3000} />);
+    const phaseList = screen.getByTestId('phase-list');
+    expect(phaseList.children.length).toBe(2);
   });
 
-  it('renders custom message when provided', () => {
-    render(<LoadingState message="Finding our history professor..." />);
-    expect(screen.getByText('Finding our history professor...')).toBeInTheDocument();
-    expect(screen.queryByText('Uncovering history...')).not.toBeInTheDocument();
+  it('renders phase labels', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now - 3000} />);
+    expect(screen.getByText('Searching the archives...')).toBeInTheDocument();
+    expect(screen.getByText('Firing up the time machine...')).toBeInTheDocument();
   });
 
   it('renders skeleton lines', () => {
-    const { container } = render(<LoadingState />);
+    const { container } = render(<LoadingState phases={activePhases} pipelineStart={now} />);
     const skeletonLines = container.querySelectorAll('.animate-pulse');
     expect(skeletonLines.length).toBeGreaterThan(0);
   });
 
-  it('shows elapsed timer when startTime is provided', () => {
-    render(<LoadingState startTime={Date.now() - 2500} />);
+  it('shows elapsed timer when pipelineStart is provided', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now - 2500} />);
     const timer = screen.getByTestId('elapsed-timer');
     expect(timer).toBeInTheDocument();
-    // Should show roughly 2.5s (may vary slightly)
     expect(timer.textContent).toMatch(/\d+\.\ds/);
   });
 
-  it('does not show timer when no startTime', () => {
-    render(<LoadingState />);
-    expect(screen.queryByTestId('elapsed-timer')).not.toBeInTheDocument();
+  it('marks active phase with data-phase-state="active"', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now - 3000} />);
+    const phase0 = screen.getByTestId('phase-0');
+    expect(phase0.getAttribute('data-phase-state')).toBe('active');
+  });
+
+  it('marks waiting phase with data-phase-state="waiting"', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now - 3000} />);
+    const phase1 = screen.getByTestId('phase-1');
+    expect(phase1.getAttribute('data-phase-state')).toBe('waiting');
+  });
+
+  it('marks completed phase with data-phase-state="completed"', () => {
+    render(<LoadingState phases={completedStoryPhases} pipelineStart={now - 6000} />);
+    const phase0 = screen.getByTestId('phase-0');
+    expect(phase0.getAttribute('data-phase-state')).toBe('completed');
+  });
+
+  it('shows header text', () => {
+    render(<LoadingState phases={activePhases} pipelineStart={now} />);
+    expect(screen.getByText('Preparing your moment in history')).toBeInTheDocument();
+  });
+
+  it('renders checkmark for completed phases', () => {
+    render(<LoadingState phases={allCompletedPhases} pipelineStart={now - 6000} />);
+    const phase0 = screen.getByTestId('phase-0');
+    expect(phase0.textContent).toContain('✓');
   });
 });
