@@ -57,8 +57,11 @@ export default function Home() {
       { label: audioMsg, startTime: 0 },
     ]);
 
-    // Warm up audio element during user click to satisfy autoplay policy
+    // Warm up audio elements during user click to satisfy autoplay policy.
+    // Both TTS and background music need their Audio elements created
+    // synchronously within the user gesture to avoid browser autoplay blocks.
     tts.warmUp();
+    bgMusic.warmUp();
     history.startLoading();
 
     const month = date.getMonth() + 1;

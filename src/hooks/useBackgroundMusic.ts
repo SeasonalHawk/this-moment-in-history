@@ -32,6 +32,13 @@ export function useBackgroundMusic() {
     return audioRef.current;
   }, []);
 
+  // Warm up audio element — call synchronously inside a user click handler
+  // to establish browser audio permission before any async work.
+  // Without this, the browser blocks play() when called from an async callback.
+  const warmUp = useCallback(() => {
+    getAudio();
+  }, [getAudio]);
+
   // Start music with fade-in — called when narrator begins reading
   const play = useCallback(() => {
     clearFade();
@@ -106,5 +113,5 @@ export function useBackgroundMusic() {
     };
   }, [clearFade]);
 
-  return { muted, play, stop, pause, resume, toggleMute };
+  return { muted, warmUp, play, stop, pause, resume, toggleMute };
 }
