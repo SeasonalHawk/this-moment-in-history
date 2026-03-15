@@ -280,6 +280,18 @@ MVP 9 and 10 diverged from the original plan above. Instead of image generation 
 | PWA manifest | Moved to MVP 11 | Low-hanging fruit saved for image MVP |
 | User favorites (localStorage) | Moved to MVP 12 | Requires user accounts for cross-device sync |
 
+### v1.1.0 — Branding & Metadata (SHIPPED)
+
+| Feature | What Shipped |
+|---------|-------------|
+| **Midjourney cinematic logo** | `logo-full.png` replaces text header via `next/image` with `priority` preload |
+| **Hybrid favicon system** | Multi-size ICO (16/32/48px), Apple touch icon, Android Chrome icons — all derived from Midjourney app icon |
+| **PWA manifest** | `site.webmanifest` with standalone display, stone-950 background, amber theme color |
+| **Open Graph + Twitter Cards** | Social preview metadata in `layout.tsx` with `metadataBase` for production URL resolution |
+| **SVG timeline motif** | Flat `logo.svg` for inline/themeable use |
+| **Dev scripts** | `start.sh` / `stop.sh` convenience scripts |
+| **Bug fixes** | metadataBase warning, branding implementation — see [#23](https://github.com/SeasonalHawk/this-moment-in-history/issues/23)-[#29](https://github.com/SeasonalHawk/this-moment-in-history/issues/29), [#31](https://github.com/SeasonalHawk/this-moment-in-history/issues/31) |
+
 ### What's Next: MVP 11+
 
 Based on the current state (10 MVPs, 214 tests, polished audio + UI), the highest-impact next features are:
@@ -295,12 +307,13 @@ Based on the current state (10 MVPs, 214 tests, polished audio + UI), the highes
 
 ## Long-Term Vision
 
-### Phase 1: Foundation (MVP 1-10) -- COMPLETE
+### Phase 1: Foundation (MVP 1-10 + v1.1.0) -- COMPLETE
 - Core storytelling engine with 20 genre lenses
 - Streaming pipeline (Claude Haiku + ElevenLabs Flash)
 - Voyagers!-themed background music with professional fade-in/out
 - System-controlled UI choreography (persistent DOM, locked Collapsible)
 - Per-request cost transparency
+- Professional branding (Midjourney logo, favicons, PWA, OG/Twitter metadata)
 - 214 tests across 13 files
 
 ### Phase 2: Visual + Viral (MVP 11-12)

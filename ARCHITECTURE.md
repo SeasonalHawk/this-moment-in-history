@@ -1,7 +1,7 @@
 # Architecture — Complete Technology Reference
 
 **This Moment in History** — System Design & Technology Map
-By Kenneth Benavides | MVP 10 | March 2026
+By Kenneth Benavides | v1.1.0 | March 2026
 
 ---
 
@@ -54,6 +54,13 @@ Every dependency was chosen for a specific reason. This table covers the full st
 | Asset | File | Purpose |
 |-------|------|---------|
 | **Background Music** | `public/audio/chronostream-runner.mp3` | Voyagers!-themed ambient soundtrack. Generated once via ElevenLabs Sound Effects, served as a static file — zero per-request cost. Loops at 12% volume with 2s fade-in and 3s fade-out. |
+| **Cinematic Logo** | `public/logo-full.png` | Midjourney-generated logo displayed in header via `next/image` with `priority` preload. Also used for OG and Twitter social cards. |
+| **App Icon** | `public/logo-icon.png` | 1024x1024 Midjourney-generated icon. Source image for all favicon derivatives. |
+| **SVG Logo** | `public/logo.svg` | Flat timeline motif for inline/themeable use cases (not currently rendered in UI). |
+| **Favicons** | `public/favicon.ico`, `favicon-*.png` | Multi-size ICO (16/32/48px) + individual PNGs for browser tabs. |
+| **Apple Touch Icon** | `public/apple-touch-icon.png` | 180x180 icon for iOS home screen bookmarks. |
+| **Android Chrome Icons** | `public/android-chrome-*.png` | 192px and 512px icons for PWA install on Android. |
+| **PWA Manifest** | `public/site.webmanifest` | Standalone display mode, stone-950 background, amber theme color. |
 
 ---
 
@@ -370,8 +377,8 @@ Every source file with its purpose:
 
 | File | Purpose |
 |------|---------|
-| `src/app/page.tsx` | Main page — streaming pipeline orchestrator, state management, UI layout |
-| `src/app/layout.tsx` | Root layout — Geist fonts, global metadata |
+| `src/app/page.tsx` | Main page — streaming pipeline orchestrator, Midjourney logo header, state management, UI layout |
+| `src/app/layout.tsx` | Root layout — Geist fonts, metadata (favicons, OG/Twitter cards, PWA manifest, metadataBase) |
 | `src/app/api/pipeline/route.ts` | Unified streaming endpoint — Claude story + ElevenLabs TTS in one NDJSON response |
 | `src/app/api/history/route.ts` | Standalone story generation endpoint (fallback) |
 | `src/app/api/tts/route.ts` | Standalone text-to-speech endpoint (fallback) |
@@ -389,6 +396,15 @@ Every source file with its purpose:
 | `src/lib/rateLimit.ts` | In-memory rate limiter — per-IP tracking, configurable window and max |
 | `src/lib/validation.ts` | Input validation — month, day, genre, monthName mapping, buildUserMessage |
 | `public/audio/chronostream-runner.mp3` | Voyagers!-themed background music (static asset, loops during narration) |
+| `public/logo-full.png` | Midjourney cinematic logo (header display, OG/Twitter social cards) |
+| `public/logo-icon.png` | Midjourney app icon (1024x1024, source for favicon derivatives) |
+| `public/logo.svg` | Flat SVG timeline motif (inline/themeable branding) |
+| `public/favicon.ico` | Multi-size ICO (16/32/48px browser tabs) |
+| `public/apple-touch-icon.png` | 180px Apple touch icon (iOS home screen) |
+| `public/android-chrome-*.png` | 192px + 512px PWA icons (Android install) |
+| `public/site.webmanifest` | PWA manifest (standalone, amber theme, stone background) |
+| `start.sh` | Dev server launcher (runs `pnpm dev`) |
+| `stop.sh` | Dev server stopper (kills port 3000 process) |
 | `vercel.json` | Security headers configuration (CSP, HSTS, X-Frame-Options, etc.) |
 | `vitest.config.ts` | Test configuration — jsdom environment, path aliases, React plugin |
 | `package.json` | Dependencies, scripts, pnpm packageManager declaration |
