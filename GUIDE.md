@@ -2,7 +2,7 @@
 
 **Author:** Kenneth Benavides
 **Built with:** Claude Code + Kajiro IQ Pro
-**Version:** MVP 10 (March 2026)
+**Version:** v1.1.0 (March 2026)
 
 ---
 
@@ -43,7 +43,7 @@ Most "this day in history" apps give you a list of bullet points. A sentence abo
 
 This project started from a different premise: every date has a story worth *feeling*. Not as a list, but as a moment. The smell of gunpowder. The sound of a crowd. The weight of a decision made in a room with bad lighting. The AI system prompt enforces literary journalism rules -- sensory details, real people, real places, present tense, second person. The result reads like the opening paragraph of a magazine feature, not an encyclopedia entry.
 
-The technical goal was equally specific: build a production-quality AI application from zero to deployed in a 3-day sprint, using Claude Code and the Kajiro IQ Pro prompt optimization framework. What was estimated to take 8-11 hours was completed in approximately 8 hours across three evening sessions, shipping 10 MVPs with 214 passing tests.
+The technical goal was equally specific: build a production-quality AI application from zero to deployed in a 3-day sprint, using Claude Code and the Kajiro IQ Pro prompt optimization framework. What was estimated to take 8-11 hours was completed in approximately 8 hours across three evening sessions, shipping 10 MVPs plus v1.1.0 branding with 214 passing tests.
 
 ---
 
@@ -61,6 +61,7 @@ The technical goal was equally specific: build a production-quality AI applicati
 | **Streaming Pipeline** | Unified server endpoint overlaps story and audio generation. Story displays while audio is still being created. |
 | **Themed Loading Messages** | Random archive-themed ("Searching the archives...") and Voyagers!-themed ("The Omni is locked on...") messages during generation. |
 | **Branding Outro** | Every audio file ends with the event title, date, year, and "This audio is created by This Moment in History. Copyright 2026." |
+| **Professional Branding** | Midjourney cinematic logo, hybrid favicon system (ICO + PNG + Apple + Android), PWA manifest, Open Graph + Twitter Cards for social sharing. See [#31](https://github.com/SeasonalHawk/this-moment-in-history/issues/31). |
 
 ---
 
@@ -408,6 +409,7 @@ Each MVP produces a *working application*. If development stopped at MVP 1, you'
 | 8 | Streaming Pipeline | NDJSON streaming + faster models | Server-side overlap, Haiku + Flash |
 | 9 | Voyagers! Music | Themed soundtrack + cost estimation | Asymmetric fade, bgMusic warmUp, themed loading messages |
 | 10 | System-Controlled Accordion | Persistent DOM cards + locked Collapsible | Derived state from props, non-interactive headers |
+| v1.1.0 | Branding & Metadata | Midjourney logo, favicons, PWA, OG/Twitter cards | Hybrid branding (PNG raster + SVG inline), `next/image` with priority |
 
 ### How Each Layer Built on the Last
 
@@ -526,6 +528,10 @@ ELEVENLABS_API_KEY=your-elevenlabs-key
 pnpm dev           # Start development server on http://localhost:3000
 pnpm test          # Run all 214 tests
 pnpm build         # Production build
+
+# Or use convenience scripts:
+./start.sh         # Launches pnpm dev in background
+./stop.sh          # Kills process on port 3000
 ```
 
 ### Optional Configuration
