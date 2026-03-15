@@ -22,7 +22,7 @@ The core finding: **This Moment in History occupies a genuinely uncontested mark
 5. [Image Generation API Evaluation](#image-generation-api-evaluation)
 6. [Recommended Image Generation Strategy](#recommended-image-generation-strategy)
 7. [Monetization Strategy](#monetization-strategy)
-8. [MVP 9 Scope Recommendation](#mvp-9-scope-recommendation)
+8. [Shipped Features (MVP 9-10)](#shipped-features-mvp-9-10)
 9. [Long-Term Vision](#long-term-vision)
 
 ---
@@ -95,11 +95,12 @@ Features that **no competitor offers in combination**:
 1. **AI-generated immersive narratives** — 2nd-person, present-tense literary journalism (vs. encyclopedic bullet points)
 2. **20 genre/tone options** — True Crime, Espionage, Love & Romance, etc. History through different lenses
 3. **Server-streamed pipeline** — Story + audio in one streaming NDJSON request with server-side overlap
-4. **Background music** — Atmospheric audio layer synced with narration
+4. **Voyagers!-themed soundtrack** — Chronostream Runner ambient music with professional fade-in/out synced with narration
 5. **Audio download** — Export narration as MP3 with branding outro
 6. **MLA citations** — Academic-grade sourcing on every story
 7. **Random discovery** — Genre-randomized exploration across dates
-8. **Pipeline performance metrics** — Real-time timing breakdown visible to users
+8. **Per-request cost transparency** — Real-time timing and cost estimation displayed on every story
+9. **System-controlled UI choreography** — Polished expand/collapse transitions with persistent DOM cards
 
 ---
 
@@ -244,52 +245,79 @@ Based on competitive analysis of pricing in the space:
 
 ---
 
-## MVP 9 Scope Recommendation
+## Shipped Features (MVP 9-10)
 
-Based on the Tier 1 feature analysis and technical feasibility, the recommended MVP 9 scope is:
+MVP 9 and 10 diverged from the original plan above. Instead of image generation and social sharing, the focus shifted to audio polish, cost transparency, and UI choreography — features that strengthen the core experience before adding new media layers.
 
-### MVP 9 — Visual History + Social Sharing
+### MVP 9 — Voyagers! Music + Cost Estimation (SHIPPED)
 
-| Feature | Implementation | Effort |
-|---------|---------------|:------:|
-| **Image generation** | Flux 2 Pro via fal.ai in streaming pipeline (parallel with TTS) | 4-6 hrs |
-| **Social sharing** | Open Graph meta tags + "Share" button generating story card image | 2-3 hrs |
-| **PWA manifest** | `manifest.json` + service worker for home-screen install | 1-2 hrs |
-| **User favorites** | localStorage bookmarks with favorites gallery page | 2-3 hrs |
-| **Estimated total** | | **~10-14 hrs** |
+| Feature | What Shipped |
+|---------|-------------|
+| **Voyagers! soundtrack** | Replaced dreamscape piano with Chronostream Runner — a fuller, themed ambient track |
+| **Background music warmUp** | Fixed browser autoplay for bg music with same warmUp() pattern as TTS |
+| **Professional fade-in/out** | 2s fade-in, 3s fade-out (asymmetric — mirrors broadcast practice) |
+| **Themed loading messages** | Random archive-themed and Voyagers!-themed messages during generation |
+| **Per-request cost estimation** | Claude token count + ElevenLabs character count → real-time cost displayed on card |
+| **209 tests passing** | +115 new tests covering music, costs, loading messages, regression guards |
 
-### MVP 9 Success Criteria
+### MVP 10 — System-Controlled Collapsible Accordion (SHIPPED)
 
-- [ ] Image generates for every story within 5 seconds
-- [ ] Image displays between story text and audio playback
-- [ ] Social share generates OG image with story excerpt
-- [ ] PWA installable on mobile (home screen icon)
-- [ ] Favorites persist across sessions via localStorage
-- [ ] All existing 94+ tests still pass
-- [ ] New tests cover image pipeline and favorites
+| Feature | What Shipped |
+|---------|-------------|
+| **Reusable Collapsible component** | `locked` mode for system-controlled expand/collapse, interactive mode for general use |
+| **Persistent DOM cards** | LoadingState and StoryCard never unmount — visibility controlled by props |
+| **Derived state from props** | `const expanded = autoExpand` — no internal useState, no sync bugs |
+| **Non-interactive headers** | Locked headers render as `<div>` not `<button>` — prevents premature clicks |
+| **Smooth transitions** | maxHeight + opacity via measured scrollHeight, works with dynamic content |
+| **214 tests passing** | +5 tests for locked Collapsible mode, updated StoryCard/LoadingState tests |
+
+### What Changed vs. Original Plan
+
+| Originally Planned for MVP 9 | Actual Status | Why |
+|-------------------------------|--------------|-----|
+| Image generation (Flux 2 Pro) | Moved to MVP 11 | Core audio experience needed polish first |
+| Social sharing (OG tags) | Moved to MVP 11 | Better to share with images when they exist |
+| PWA manifest | Moved to MVP 11 | Low-hanging fruit saved for image MVP |
+| User favorites (localStorage) | Moved to MVP 12 | Requires user accounts for cross-device sync |
+
+### What's Next: MVP 11+
+
+Based on the current state (10 MVPs, 214 tests, polished audio + UI), the highest-impact next features are:
+
+| MVP | Focus | Key Features |
+|-----|-------|-------------|
+| **11** | **Visual History** | Image generation (Flux 2 Pro via fal.ai, parallel with TTS in NDJSON pipeline), loading carousel with crossfading AI-generated artwork, social sharing (Open Graph images + share button), PWA manifest |
+| **12** | **Engagement** | User favorites (localStorage → cloud sync), daily notification/digest, podcast RSS feed auto-generation |
+| **13** | **Scale** | User accounts, gamification (streaks, quizzes), timeline visualization of explored dates |
+| **14+** | **Monetization** | Freemium tiers, classroom/education tools, public API, multi-language support |
 
 ---
 
 ## Long-Term Vision
 
-### Phase 1: Foundation (MVP 9-10)
-- Image generation pipeline
-- Social sharing + viral growth
-- PWA + mobile install
-- User favorites (localStorage)
+### Phase 1: Foundation (MVP 1-10) -- COMPLETE
+- Core storytelling engine with 20 genre lenses
+- Streaming pipeline (Claude Haiku + ElevenLabs Flash)
+- Voyagers!-themed background music with professional fade-in/out
+- System-controlled UI choreography (persistent DOM, locked Collapsible)
+- Per-request cost transparency
+- 214 tests across 13 files
 
-### Phase 2: Engagement (MVP 11-12)
-- Daily notification/digest system
+### Phase 2: Visual + Viral (MVP 11-12)
+- Image generation pipeline (Flux 2 Pro, parallel with TTS)
+- Loading carousel with crossfading AI-generated artwork
+- Social sharing (OG images, share buttons)
+- PWA manifest + home-screen install
+- User favorites + daily notifications
 - Auto-generated podcast RSS feed
-- Gamification (daily quiz, streaks)
-- Timeline visualization of explored dates
 
-### Phase 3: Scale (MVP 13+)
+### Phase 3: Scale + Monetize (MVP 13+)
 - User accounts + cloud sync
+- Gamification (streaks, quizzes)
 - Multi-language support
 - Classroom/education tools
 - Public API for developers
-- Monetization (freemium + education tier)
+- Freemium monetization tiers
 
 ### The Vision
 
